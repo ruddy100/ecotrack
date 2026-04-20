@@ -13,6 +13,181 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   SUPABASE — Conexión a base de datos
+   ============================================================ */
+const SUPABASE_URL = 'https://oapyompesubyievmqrkm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hcHlvbXBlc3VieWlldm1xcmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NDI5MTYsImV4cCI6MjA5MjIxODkxNn0.9mImuJWWL4ZkYw0UYCy50-9SC7Y6nitOkC_oydAMtOk';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ── Helpers de sincronización ── */
+async function sbGuardarAgua(r) {
+  try {
+    await db.from('water_readings').insert({
+      fecha:            r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
+      sucursal:         r.sucursal,
+      medidor:          r.medidor,
+      lectura_anterior: r.lectura_ant,
+      lectura_actual:   r.lectura_act,
+      consumo:          r.consumo,
+      unidad:           r.unidad || 'm3',
+      observacion:      r.observacion || null,
+    });
+  } catch(e) { console.warn('Supabase agua:', e.message); }
+}
+
+async function sbGuardarResiduos(r) {
+  try {
+    await db.from('waste_records').insert({
+      fecha:        r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
+      planta:       r.planta,
+      categoria:    r.categoria,
+      subcategoria: r.subcategoria,
+      cantidad:     r.cantidad,
+      unidad:       r.unidad,
+      tipo:         r.tipo,
+    });
+  } catch(e) { console.warn('Supabase residuos:', e.message); }
+}
+
+async function sbGuardarCarbon(r) {
+  try {
+    await db.from('carbon_records').insert({
+      fecha:        r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
+      planta:       r.planta,
+      categoria:    r.categoria,
+      subcategoria: r.subcategoria,
+      cantidad:     r.cantidad,
+      unidad:       r.unidad,
+      factor:       r.factor,
+      tco2e:        r.tco2e,
+    });
+  } catch(e) { console.warn('Supabase carbono:', e.message); }
+}
+
+async function sbGuardarLoteAgua(registros) {
+  if (!registros.length) return;
+  const rows = registros.map(r => ({
+    fecha:            r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
+    sucursal:         r.sucursal,
+    medidor:          r.medidor,
+    lectura_anterior: r.lectura_ant,
+    lectura_actual:   r.lectura_act,
+    consumo:          r.consumo,
+    unidad:           r.unidad || 'm3',
+    observacion:      r.observacion || null,
+  }));
+  try { await db.from('water_readings').insert(rows); }
+  catch(e) { console.warn('Supabase lote agua:', e.message); }
+}
+
+async function sbGuardarLoteResiduos(registros) {
+  if (!registros.length) return;
+  const rows = registros.map(r => ({
+    fecha:        r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
+    planta:       r.planta,
+    categoria:    r.categoria,
+    subcategoria: r.subcategoria,
+    cantidad:     r.cantidad,
+    unidad:       r.unidad,
+    tipo:         r.tipo,
+  }));
+  try { await db.from('waste_records').insert(rows); }
+  catch(e) { console.warn('Supabase lote residuos:', e.message); }
+}
+
+async function sbGuardarLoteCarbon(registros) {
+  if (!registros.length) return;
+  const rows = registros.map(r => ({
+    fecha:        r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
+    planta:       r.planta,
+    categoria:    r.categoria,
+    subcategoria: r.subcategoria,
+    cantidad:     r.cantidad,
+    unidad:       r.unidad,
+    factor:       r.factor,
+    tco2e:        r.tco2e,
+  }));
+  try { await db.from('carbon_records').insert(rows); }
+  catch(e) { console.warn('Supabase lote carbono:', e.message); }
+}
+
+async function sbCargarTodo() {
+  const chip = document.getElementById('meta-supabase');
+  try {
+    const [{ data: w, error: eW }, { data: wr, error: eWr }, { data: c, error: eC }] = await Promise.all([
+      db.from('water_readings').select('*').order('fecha').order('created_at'),
+      db.from('waste_records').select('*').order('fecha').order('created_at'),
+      db.from('carbon_records').select('*').order('fecha').order('created_at'),
+    ]);
+
+    if (eW || eWr || eC) throw new Error(eW?.message || eWr?.message || eC?.message);
+
+    if (w?.length) {
+      state.water = w.map(r => ({
+        fecha:        new Date(r.fecha + 'T12:00:00'),
+        sucursal:     r.sucursal,
+        medidor:      r.medidor,
+        lectura_ant:  r.lectura_anterior,
+        lectura_act:  r.lectura_actual,
+        consumo:      r.consumo,
+        unidad:       r.unidad,
+        observacion:  r.observacion,
+        _consumo_excel: r.consumo,
+        _lant_excel:    r.lectura_anterior,
+      }));
+    }
+    if (wr?.length) {
+      state.waste = wr.map(r => ({
+        fecha:        new Date(r.fecha + 'T12:00:00'),
+        planta:       r.planta,
+        categoria:    r.categoria,
+        subcategoria: r.subcategoria,
+        cantidad:     r.cantidad,
+        unidad:       r.unidad,
+        tipo:         r.tipo,
+      }));
+    }
+    if (c?.length) {
+      state.carbon = c.map(r => ({
+        fecha:        new Date(r.fecha + 'T12:00:00'),
+        planta:       r.planta,
+        categoria:    r.categoria,
+        subcategoria: r.subcategoria,
+        cantidad:     r.cantidad,
+        unidad:       r.unidad,
+        factor:       r.factor,
+        tco2e:        r.tco2e,
+      }));
+    }
+
+    // Actualizar chip de estado
+    const total = (w?.length||0) + (wr?.length||0) + (c?.length||0);
+    if (chip) {
+      chip.textContent = `✓ BD conectada · ${total} registros`;
+      chip.style.color = 'var(--success)';
+    }
+
+    if (w?.length || wr?.length || c?.length) {
+      updateNavCounts();
+      updateHomeStats();
+      renderHome();
+      if (state.currentView === 'water')  renderWater();
+      if (state.currentView === 'waste')  renderWaste();
+      if (state.currentView === 'carbon') renderCarbon();
+      refreshDropdownsAll();
+      console.log(`✓ Supabase: ${w?.length||0} agua · ${wr?.length||0} residuos · ${c?.length||0} carbono`);
+    } else {
+      if (chip) { chip.textContent = '✓ BD conectada · vacía'; chip.style.color = 'var(--success)'; }
+    }
+  } catch(e) {
+    console.warn('Supabase carga inicial:', e.message);
+    if (chip) { chip.textContent = '✗ Sin conexión BD'; chip.style.color = 'var(--danger)'; }
+  }
+}
+</script>
 
 <style>
 /* ============================================================
@@ -1340,6 +1515,7 @@ input, select { font-family: inherit; color: inherit; }
           </div>
           <div class="dashboard-meta">
             <span class="meta-chip live">Sistema activo</span>
+            <span class="meta-chip" id="meta-supabase" style="color:var(--text-muted)">⏳ Conectando BD…</span>
             <span class="meta-chip" id="meta-updated">Sin datos</span>
             <span class="meta-chip" id="meta-period">—</span>
           </div>
@@ -2243,6 +2419,7 @@ function parseWater(wb) {
 
   state.water = parsed;
   toast('Datos cargados', `${parsed.length} registros de huella hídrica`);
+  sbGuardarLoteAgua(parsed);
   renderWater();
   updateNavCounts();
   updateHomeStats();
@@ -2349,6 +2526,7 @@ function parseWaste(wb) {
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   state.waste = parsed;
   toast('Datos cargados', `${parsed.length} registros de residuos`);
+  sbGuardarLoteResiduos(parsed);
   renderWaste();
   updateNavCounts();
   updateHomeStats();
@@ -2385,6 +2563,7 @@ function parseCarbon(wb) {
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   state.carbon = parsed;
   toast('Datos cargados', `${parsed.length} registros de emisiones`);
+  sbGuardarLoteCarbon(parsed);
   renderCarbon();
   updateNavCounts();
   updateHomeStats();
@@ -3701,6 +3880,9 @@ function init() {
   initFormWater();
   initFormWaste();
   initFormCarbon();
+
+  // Cargar datos guardados desde Supabase
+  sbCargarTodo();
 }
 /* ============================================================
    FORMULARIOS DE INGRESO MANUAL
@@ -3998,6 +4180,7 @@ function initFormWater() {
       _manual: true,
     };
     state.water.push(registro);
+    sbGuardarAgua(registro);
 
     const badge = document.getElementById('badge-water-manual');
     if (badge) badge.textContent = state.water.filter(r => r._manual).length;
@@ -4132,6 +4315,7 @@ function initFormWaste() {
       cantidad, unidad, tipo, _reciclada: reciclada, _manual: true,
     };
     state.waste.push(registro);
+    sbGuardarResiduos(registro);
 
     const badge = document.getElementById('badge-waste-manual');
     if (badge) badge.textContent = state.waste.filter(r => r._manual).length;
@@ -4325,6 +4509,7 @@ function initFormCarbon() {
       cantidad, unidad, factor, tco2e, _manual: true,
     };
     state.carbon.push(registro);
+    sbGuardarCarbon(registro);
 
     const badge = document.getElementById('badge-carbon-manual');
     if (badge) badge.textContent = state.carbon.filter(r => r._manual).length;
