@@ -2505,7 +2505,7 @@ function parseWaste(wb) {
     const cantidad    = parseFloat(getCol(r, 'CANTIDAD'));
     const unidad      = getCol(r, 'UNIDAD');
     // Nueva columna opcional
-    const reciclada   = parseFloat(getCol(r, 'CANTIDAD RECICLADA', 'CANTIDAD_RECICLADA')) || 0;
+    const reciclada   = parseFloat(getCol(r, 'CANTIDAD RECICLADA', 'CANTIDAD_RECICLADA', 'CANT. RECICLADA')) || 0;
     if (!fecha || !categoria || isNaN(cantidad)) continue;
     const cat  = String(categoria).trim();
     const catN = norm(cat);
@@ -2905,23 +2905,28 @@ function renderWasteTable(data) {
   const top = [...data].sort((a,b) => b.fecha - a.fecha).slice(0, 200);
   const badge = tipo => {
     const m = { 'PELIGROSO': 'red', 'RECICLABLE': 'green', 'NO APROVECHABLE': 'yellow', 'OTROS': 'neutral' };
-    return `<span class="badge ${m[tipo]||'neutral'}">${tipo}</span>`;
+    return '<span class="badge ' + (m[tipo]||'neutral') + '">' + tipo + '</span>';
   };
-  t.innerHTML = `
-    <thead><tr>
-      <th>Fecha</th><th>Planta</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th>
-      <th class="num">Cantidad</th><th>Unidad</th>
-    </tr></thead>
-    <tbody>${top.map(r => `
-        <tr>
-          <td>${r.fecha.toLocaleDateString('es-BO')}</td>
-          <td>${r.planta}</td>
-          <td>${badge(r.tipo)}</td>
-          <td>${r.categoria}</td>
-          <td>${r.subcategoria}</td>
-          <td class="num" style="font-weight:700">${fmtFull(r.cantidad)}</td>
-          <td>${r.unidad}</td>
-        </tr>`).join('')}</tbody>`;
+  const rows = top.map(r => {
+    const rec = r._reciclada || 0;
+    const recCell = rec > 0
+      ? '<td class="num" style="color:var(--success);font-weight:700">' + fmtFull(rec) + '</td>'
+      : '<td class="num" style="color:var(--text-muted)">—</td>';
+    return '<tr>'
+      + '<td>' + r.fecha.toLocaleDateString('es-BO') + '</td>'
+      + '<td>' + r.planta + '</td>'
+      + '<td>' + badge(r.tipo) + '</td>'
+      + '<td>' + r.categoria + '</td>'
+      + '<td>' + r.subcategoria + '</td>'
+      + '<td class="num" style="font-weight:700">' + fmtFull(r.cantidad) + '</td>'
+      + '<td>' + r.unidad + '</td>'
+      + recCell
+      + '</tr>';
+  }).join('');
+  t.innerHTML = '<thead><tr>'
+    + '<th>Fecha</th><th>Planta</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th>'
+    + '<th class="num">Cantidad</th><th>Unidad</th><th class="num">Cant. Reciclada</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody>';
 }
 
 /* ============================================================
