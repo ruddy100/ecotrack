@@ -45,9 +45,10 @@ async function sbGuardarResiduos(r) {
       planta:       r.planta,
       categoria:    r.categoria,
       subcategoria: r.subcategoria,
-      cantidad:     r.cantidad,
-      unidad:       r.unidad,
-      tipo:         r.tipo,
+      cantidad:           r.cantidad,
+      unidad:             r.unidad,
+      tipo:               r.tipo,
+      cantidad_reciclada: r._reciclada || 0,
     });
   } catch(e) { console.warn('Supabase residuos:', e.message); }
 }
@@ -90,9 +91,10 @@ async function sbGuardarLoteResiduos(registros) {
     planta:       r.planta,
     categoria:    r.categoria,
     subcategoria: r.subcategoria,
-    cantidad:     r.cantidad,
-    unidad:       r.unidad,
-    tipo:         r.tipo,
+    cantidad:           r.cantidad,
+    unidad:             r.unidad,
+    tipo:               r.tipo,
+    cantidad_reciclada: r._reciclada || 0,
   }));
   try { await db.from('waste_records').insert(rows); }
   catch(e) { console.warn('Supabase lote residuos:', e.message); }
@@ -148,6 +150,7 @@ async function sbCargarTodo() {
         cantidad:     r.cantidad,
         unidad:       r.unidad,
         tipo:         r.tipo,
+        _reciclada:   r.cantidad_reciclada || 0,
       }));
     }
     if (c?.length) {
@@ -1833,7 +1836,7 @@ input, select { font-family: inherit; color: inherit; }
             </div>
             <div class="kpi-card kpi-recycle">
               <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></div>
-              <div class="kpi-label">Aprovechables</div>
+              <div class="kpi-label">Cantidad reciclada</div>
               <div class="kpi-value" id="k-waste-recyclable">0<span class="kpi-unit">kg</span></div>
             </div>
           </div>
@@ -2825,13 +2828,16 @@ function renderWaste() {
   const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
   const total = data.reduce((s,r) => s + toKg(r), 0);
   const hazard = data.filter(r => r.tipo === 'PELIGROSO').reduce((s,r) => s + toKg(r), 0);
-  const recyclable = data.filter(r => r.tipo === 'RECICLABLE').reduce((s,r) => s + toKg(r), 0);
-  const recycleRate = total > 0 ? (recyclable / total) * 100 : 0;
+  // Tasa real = lo efectivamente reciclado (campo _reciclada) sobre el total generado
+  const recycledTotal = data.reduce((s,r) => s + (r._reciclada || 0), 0);
+  const recyclable    = data.filter(r => r.tipo === 'RECICLABLE').reduce((s,r) => s + toKg(r), 0);
+  const recycleRate   = total > 0 ? (recycledTotal / total) * 100 : 0;
 
   document.getElementById('k-waste-total').innerHTML = `${fmtFull(total)}<span class="kpi-unit">kg</span>`;
   document.getElementById('k-waste-recycle').innerHTML = `${recycleRate.toFixed(1)}<span class="kpi-unit">%</span>`;
   document.getElementById('k-waste-hazard').innerHTML = `${fmtFull(hazard)}<span class="kpi-unit">kg</span>`;
-  document.getElementById('k-waste-recyclable').innerHTML = `${fmtFull(recyclable)}<span class="kpi-unit">kg</span>`;
+  // Aprovechables = lo efectivamente reciclado de todos los tipos (incluyendo peligrosos reciclados)
+  document.getElementById('k-waste-recyclable').innerHTML = `${fmtFull(recycledTotal)}<span class="kpi-unit">kg</span>`;
 
   const COLORS = getChartColors();
   const C = getC();
@@ -3141,8 +3147,9 @@ function updateHomeStats() {
   const waterTotal   = state.water.reduce((s,r) => s+r.consumo, 0);
   const wasteTotal   = state.waste.reduce((s,r) => s+toKg(r), 0);
   const carbonTotal  = state.carbon.reduce((s,r) => s+r.tco2e, 0);
-  const recyclable   = state.waste.filter(r => r.tipo==='RECICLABLE').reduce((s,r) => s+toKg(r), 0);
-  const recycleRate  = wasteTotal>0 ? (recyclable/wasteTotal)*100 : 0;
+  const recycledTotal = state.waste.reduce((s,r) => s + (r._reciclada || 0), 0);
+  const recyclable    = state.waste.filter(r => r.tipo==='RECICLABLE').reduce((s,r) => s+toKg(r), 0);
+  const recycleRate   = wasteTotal>0 ? (recycledTotal/wasteTotal)*100 : 0;
   const plants = new Set([
     ...state.water.map(r=>r.sucursal),
     ...state.waste.map(r=>r.planta),
@@ -3308,8 +3315,9 @@ function renderAlerts() {
   if (state.waste.length > 0) {
     const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
     const total = state.waste.reduce((s,r)=>s+toKg(r),0);
+    const recycledA = state.waste.reduce((s,r)=>s+(r._reciclada||0),0);
     const recyclable = state.waste.filter(r => r.tipo === 'RECICLABLE').reduce((s,r)=>s+toKg(r),0);
-    const rate = total > 0 ? (recyclable/total)*100 : 0;
+    const rate = total > 0 ? (recycledA/total)*100 : 0;
     if (rate < 20 && total > 0) {
       alerts.push({
         type: 'danger',
@@ -3593,8 +3601,9 @@ document.getElementById('btn-export-pdf').addEventListener('click', async () => 
   const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
   const waterTotal = state.water.reduce((s,r)=>s+r.consumo,0);
   const wasteTotal = state.waste.reduce((s,r)=>s+toKg(r),0);
-  const recyclable = state.waste.filter(r => r.tipo === 'RECICLABLE').reduce((s,r)=>s+toKg(r),0);
-  const recycleRate = wasteTotal > 0 ? (recyclable/wasteTotal)*100 : 0;
+  const recycledPDF = state.waste.reduce((s,r)=>s+(r._reciclada||0),0);
+  const recyclable  = state.waste.filter(r => r.tipo === 'RECICLABLE').reduce((s,r)=>s+toKg(r),0);
+  const recycleRate = wasteTotal > 0 ? (recycledPDF/wasteTotal)*100 : 0;
   const carbonTotal = state.carbon.reduce((s,r)=>s+r.tco2e,0);
 
   doc.autoTable({
