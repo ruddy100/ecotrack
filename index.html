@@ -1,0 +1,4367 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTrack · Plataforma de Gestión Ambiental</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+/* ============================================================
+   THEME TOKENS
+   ============================================================ */
+:root[data-theme="light"] {
+  --bg: #f0f4f8;
+  --bg-warm: #e4eaf2;
+  --surface: #ffffff;
+  --surface-2: #f7f9fc;
+  --ink: #0f2a4a;
+  --text: #1e3550;
+  --text-dim: #4a6080;
+  --text-muted: #7a93b0;
+  --border: #d5e0ec;
+  --border-2: #b0c4d8;
+
+  /* Mapeamos green-* a navy-* para que todo el sistema use azul marino */
+  --green-900: #0f2a4a;
+  --green-800: #1a3d6b;
+  --green-700: #1e5080;
+  --green-600: #2563a8;
+  --green-500: #3b7dd8;
+  --green-400: #5a9ee8;
+  --green-200: #b8d4f5;
+  --green-100: #ddeaf9;
+  --green-50:  #eef5fc;
+  --lime: #38bdf8;
+  --lime-dark: #0ea5e9;
+
+  --water: #0ea5e9;
+  --water-soft: #e0f2fe;
+  --waste: #d97706;
+  --waste-soft: #fef3c7;
+  --carbon: #059669;
+  --carbon-soft: #d1fae5;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+
+  --chart-grid: #dde8f2;
+  --chart-axis: #7a93b0;
+
+  --shadow-xs: 0 1px 2px rgba(15,42,74,.05);
+  --shadow-sm: 0 1px 3px rgba(15,42,74,.07);
+  --shadow: 0 4px 12px rgba(15,42,74,.08);
+  --shadow-lg: 0 12px 32px rgba(15,42,74,.10);
+}
+
+:root[data-theme="dark"] {
+  --bg: #080f1a;
+  --bg-warm: #0d1826;
+  --surface: #101e30;
+  --surface-2: #162436;
+  --ink: #e2eaf4;
+  --text: #c8d8ea;
+  --text-dim: #8aaccc;
+  --text-muted: #4d6e8e;
+  --border: #1e3352;
+  --border-2: #2b4a70;
+
+  --green-900: #e2eaf4;
+  --green-800: #c8d8ea;
+  --green-700: #90b8e0;
+  --green-600: #5a9ee8;
+  --green-500: #3b7dd8;
+  --green-400: #2563a8;
+  --green-200: #1a3d6b;
+  --green-100: #122a50;
+  --green-50:  #0d1f3a;
+  --lime: #38bdf8;
+  --lime-dark: #0ea5e9;
+
+  --water: #38bdf8;
+  --water-soft: #0c2d48;
+  --waste: #fbbf24;
+  --waste-soft: #2d2010;
+  --carbon: #34d399;
+  --carbon-soft: #0d2e20;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+
+  --chart-grid: #152036;
+  --chart-axis: #4d6e8e;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
+  --shadow: 0 4px 12px rgba(0,0,0,.45);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.6);
+}
+
+:root {
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r: 14px;
+  --r-lg: 20px;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+  transition: background-color .25s ease, color .25s ease;
+}
+
+body { min-height: 100vh; }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select { font-family: inherit; color: inherit; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+/* === SIDEBAR === */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 20px; margin-bottom: 14px; }
+.brand-logo {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--ink);
+  display: grid; place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+:root[data-theme="dark"] .brand-logo { background: var(--lime); }
+.brand-logo::after {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--lime);
+  top: 5px; right: 5px;
+}
+:root[data-theme="dark"] .brand-logo::after { background: var(--ink); }
+.brand-logo svg { width: 18px; height: 18px; color: #fff; position: relative; z-index: 1; }
+:root[data-theme="dark"] .brand-logo svg { color: var(--ink); }
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.brand-sub {
+  font-size: 9.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+.nav-section-title {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 12px 6px;
+  font-weight: 700;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-weight: 500;
+  font-size: 13px;
+  transition: all .15s ease;
+  margin-bottom: 1px;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: var(--bg-warm); }
+.nav-item.active { background: var(--ink); color: var(--bg); }
+:root[data-theme="dark"] .nav-item.active { background: var(--lime); color: var(--ink); }
+.nav-item.active .nav-count { color: var(--lime); }
+:root[data-theme="dark"] .nav-item.active .nav-count { color: var(--ink); opacity: .7; }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-item .nav-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.sidebar-footer { margin-top: auto; padding-top: 16px; }
+
+/* Theme toggle */
+.theme-toggle {
+  display: flex;
+  padding: 3px;
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  gap: 2px;
+  width: 100%;
+}
+.theme-toggle button {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all .2s;
+}
+.theme-toggle button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-xs);
+}
+.theme-toggle button svg { width: 13px; height: 13px; }
+
+/* === MAIN === */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.topbar-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+/* BOTONES */
+.btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s;
+}
+.btn:hover { border-color: var(--ink); background: var(--bg-warm); }
+.btn svg { width: 13px; height: 13px; }
+.btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+:root[data-theme="dark"] .btn-primary { background: var(--lime); color: var(--ink); border-color: var(--lime); }
+.btn-primary:hover { background: var(--green-800); border-color: var(--green-800); color: var(--bg); }
+:root[data-theme="dark"] .btn-primary:hover { background: var(--lime-dark); border-color: var(--lime-dark); color: var(--ink); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: rgba(185,74,60,.08); color: var(--danger); border-color: var(--danger); }
+.btn-icon {
+  width: 36px; height: 36px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+.btn-icon svg { width: 14px; height: 14px; }
+
+/* CONTENT */
+.content { padding: 24px 32px 60px; min-width: 0; max-width: 1600px; }
+
+/* ============================================================
+   SEGMENTADORES COMPACTOS (fila única)
+   ============================================================ */
+.segments {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-xs);
+  overflow-x: auto;
+  align-items: center;
+  white-space: nowrap;
+}
+.segments::-webkit-scrollbar { display: none; }
+.seg-label {
+  font-size: 9.5px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 0 4px 0 8px;
+  flex-shrink: 0;
+}
+.seg-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.seg-select {
+  padding: 6px 12px;
+  background: var(--bg-warm);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 600;
+  outline: none;
+  transition: all .15s;
+  flex-shrink: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238a968e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 26px;
+}
+.seg-select:hover { background-color: var(--bg); border-color: var(--border-2); }
+.seg-select:focus { border-color: var(--ink); background-color: var(--surface); }
+.seg-reset {
+  margin-left: auto;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.seg-reset:hover { color: var(--ink); border-color: var(--ink); }
+
+/* ============================================================
+   KPIs
+   ============================================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  position: relative;
+  overflow: hidden;
+  transition: all .2s;
+  box-shadow: var(--shadow-xs);
+}
+.kpi-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+.kpi-icon {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--green-100);
+  color: var(--green-700);
+  margin-bottom: 14px;
+}
+.kpi-icon svg { width: 16px; height: 16px; }
+.kpi-card.kpi-water .kpi-icon { background: var(--water-soft); color: var(--water); }
+.kpi-card.kpi-waste .kpi-icon { background: var(--waste-soft); color: var(--waste); }
+.kpi-card.kpi-carbon .kpi-icon { background: var(--carbon-soft); color: var(--carbon); }
+.kpi-card.kpi-recycle .kpi-icon { background: var(--green-100); color: var(--green-600); }
+
+.kpi-label {
+  font-size: 10.5px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+.kpi-unit {
+  font-family: var(--font);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 5px;
+  letter-spacing: 0;
+}
+
+/* ============================================================
+   PANELES
+   ============================================================ */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-xs);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+.panel-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; font-weight: 500; }
+.panel-actions { margin-left: auto; display: flex; gap: 8px; }
+.panel-eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--green-600);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+
+.chart-wrap { position: relative; height: 300px; }
+.chart-wrap.sm { height: 240px; }
+.chart-wrap.lg { height: 380px; }
+
+/* ============================================================
+   HOME DASHBOARD — estilo enterprise (no landing)
+   ============================================================ */
+.dashboard-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.dashboard-title-block .eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--green-600);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.dashboard-title-block h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1.05;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.dashboard-title-block p {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  font-weight: 500;
+  max-width: 540px;
+}
+.dashboard-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.meta-chip.live::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: .6; }
+  50% { opacity: 1; }
+}
+
+/* Summary strip para inicio */
+.summary-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 24px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-xs);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.summary-strip::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--green-600), var(--lime));
+}
+.summary-item { padding-left: 4px; }
+.summary-val {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+.summary-val em { font-style: italic; color: var(--green-600); }
+.summary-lab {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 700;
+}
+.summary-delta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   PILLARS (cards de módulo en inicio)
+   ============================================================ */
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.pillar {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  transition: all .18s;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pillar:hover { border-color: var(--ink); transform: translateY(-1px); box-shadow: var(--shadow); }
+.pillar-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.pillar-icon.water { background: var(--water-soft); color: var(--water); }
+.pillar-icon.waste { background: var(--waste-soft); color: var(--waste); }
+.pillar-icon.carbon { background: var(--carbon-soft); color: var(--carbon); }
+.pillar-icon svg { width: 20px; height: 20px; }
+.pillar-body { flex: 1; min-width: 0; }
+.pillar-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+.pillar-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.pillar-arrow {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg-warm);
+  color: var(--text-dim);
+  display: grid; place-items: center;
+  transition: all .18s;
+}
+.pillar:hover .pillar-arrow { background: var(--ink); color: var(--bg); transform: translateX(3px); }
+.pillar-arrow svg { width: 12px; height: 12px; }
+
+/* ============================================================
+   AI INSIGHTS
+   ============================================================ */
+.ai-insights {
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+:root[data-theme="dark"] .ai-insights {
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--green-100) 100%);
+  color: var(--ink);
+  border: 1px solid var(--green-200);
+}
+.ai-insights::before {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, var(--lime) 0%, transparent 70%);
+  opacity: .1;
+  border-radius: 50%;
+  top: -80px; right: -60px;
+}
+.ai-insights-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+.ai-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.ai-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.ai-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: relative;
+  z-index: 1;
+}
+:root[data-theme="dark"] .ai-insight { border-bottom-color: var(--border); }
+.ai-insight:last-child { border-bottom: 0; }
+.ai-insight-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+.ai-insight.warning .ai-insight-dot { background: #f5b947; }
+.ai-insight.danger .ai-insight-dot { background: #e87462; }
+.ai-insight.info .ai-insight-dot { background: var(--green-400); }
+.ai-insight.success .ai-insight-dot { background: var(--lime); }
+.ai-insight-body { flex: 1; }
+.ai-insight-title { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+.ai-insight-text {
+  font-size: 12px;
+  color: rgba(255,255,255,.7);
+  line-height: 1.5;
+}
+:root[data-theme="dark"] .ai-insight-text { color: var(--text-dim); }
+
+.ai-empty {
+  padding: 18px 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: rgba(255,255,255,.55);
+  position: relative;
+  z-index: 1;
+}
+:root[data-theme="dark"] .ai-empty { color: var(--text-muted); }
+
+/* ============================================================
+   TABLAS
+   ============================================================ */
+.table-wrap { overflow-x: auto; border-radius: var(--r-sm); border: 1px solid var(--border); }
+.table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.table th {
+  text-align: left;
+  padding: 11px 14px;
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  position: sticky;
+  top: 0;
+}
+.table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+}
+.table tr:last-child td { border-bottom: 0; }
+.table tr:hover td { background: var(--bg-warm); }
+.table .num { text-align: right; font-family: var(--font-mono); font-size: 12px; }
+.table-compact { max-height: 360px; overflow-y: auto; }
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--green-100);
+  color: var(--green-700);
+  border: 1px solid var(--green-200);
+  letter-spacing: .2px;
+}
+.badge.green { background: var(--green-100); color: var(--green-700); border-color: var(--green-200); }
+.badge.yellow { background: var(--waste-soft); color: var(--waste); }
+.badge.red { background: rgba(185,74,60,.1); color: var(--danger); border-color: rgba(185,74,60,.25); }
+.badge.blue { background: var(--water-soft); color: var(--water); }
+.badge.neutral { background: var(--bg-warm); color: var(--text-dim); border-color: var(--border); }
+
+/* ============================================================
+   UPLOAD (ahora al final de cada módulo)
+   ============================================================ */
+.upload-panel {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r);
+}
+.upload-panel-title {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.upload-zone {
+  border: 2px dashed var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 28px 20px;
+  text-align: center;
+  transition: all .2s;
+  cursor: pointer;
+  background: var(--surface);
+  display: block;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--green-600);
+  background: var(--green-50);
+}
+.upload-zone .upload-icon {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--green-100);
+  color: var(--green-700);
+  display: grid; place-items: center;
+  margin: 0 auto 10px;
+}
+.upload-zone .upload-icon svg { width: 18px; height: 18px; }
+.upload-zone h3 { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.upload-zone p { font-size: 12px; color: var(--text-muted); }
+
+/* How-it-works (también al final) */
+.howto {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: var(--bg-warm);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  border-left: 3px solid var(--green-500);
+}
+.howto b { color: var(--text); font-weight: 600; }
+
+/* ============================================================
+   EMPTY STATES
+   ============================================================ */
+.empty {
+  text-align: center;
+  padding: 44px 20px;
+  color: var(--text-muted);
+}
+.empty-icon {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--bg-warm);
+  color: var(--text-muted);
+  display: grid; place-items: center;
+  margin: 0 auto 12px;
+}
+.empty-icon svg { width: 22px; height: 22px; }
+.empty-title {
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+.empty-sub { font-size: 12px; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green-600);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  animation: slideIn .25s ease;
+}
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+.toast-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.toast-msg { font-size: 12px; color: var(--text-dim); }
+@keyframes slideIn {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* ============================================================
+   VIEW SWITCHING
+   ============================================================ */
+.view { display: none; }
+.view.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   FORMULARIOS DE INGRESO MANUAL
+   ============================================================ */
+.form-manual {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-top: 20px;
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+/* Header colapsable del formulario */
+.form-manual-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface);
+  transition: background .15s;
+  border-bottom: 1px solid transparent;
+}
+.form-manual-header:hover { background: var(--bg-warm); }
+.form-manual.open .form-manual-header { border-bottom-color: var(--border); }
+
+.form-manual-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--green-100);
+  color: var(--green-600);
+  flex-shrink: 0;
+}
+.form-manual-icon svg { width: 16px; height: 16px; }
+
+.form-manual-label {
+  flex: 1;
+}
+.form-manual-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.form-manual-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.form-manual-toggle {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  color: var(--text-muted);
+  transition: transform .25s ease, background .15s;
+  background: var(--bg-warm);
+  flex-shrink: 0;
+}
+.form-manual-toggle svg { width: 14px; height: 14px; }
+.form-manual.open .form-manual-toggle { transform: rotate(180deg); background: var(--green-100); color: var(--green-600); }
+
+/* Cuerpo colapsable */
+.form-manual-body {
+  display: none;
+  padding: 20px;
+  animation: formFadeIn .2s ease;
+}
+.form-manual.open .form-manual-body { display: block; }
+@keyframes formFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Grid de campos */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 18px;
+  margin-bottom: 18px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-field.full { grid-column: 1 / -1; }
+
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.form-label .req {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.form-input {
+  padding: 10px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+.form-input:focus {
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px rgba(37,99,168,.12);
+}
+.form-input.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(220,38,38,.1); }
+.form-input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+/* Fila inferior: botón + feedback */
+.form-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.btn-save-record {
+  padding: 11px 24px;
+  background: var(--green-800);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-save-record:hover { background: var(--green-700); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-save-record:active { transform: translateY(0); }
+.btn-save-record svg { width: 15px; height: 15px; }
+
+.btn-clear-form {
+  padding: 11px 16px;
+  background: transparent;
+  border: 1.5px solid var(--border-2);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-clear-form:hover { border-color: var(--ink); color: var(--ink); }
+
+/* Feedback de confirmación */
+.form-feedback {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  animation: feedbackIn .3s ease;
+}
+.form-feedback.show { display: inline-flex; }
+.form-feedback.success { background: var(--carbon-soft); color: var(--carbon); }
+.form-feedback.success svg { color: var(--carbon); }
+.form-feedback.error { background: rgba(220,38,38,.08); color: var(--danger); }
+.form-feedback svg { width: 15px; height: 15px; flex-shrink: 0; }
+@keyframes feedbackIn {
+  from { opacity: 0; transform: scale(.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Badge de registros manuales */
+.manual-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--green-100);
+  color: var(--green-600);
+  border: 1px solid var(--green-200);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   HOME KPI CARDS — dashboard moderno animado
+   ============================================================ */
+.home-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+@media (max-width: 1200px) { .home-kpi-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 600px)  { .home-kpi-grid { grid-template-columns: 1fr; } }
+
+.home-kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  position: relative;
+  overflow: hidden;
+  animation: kpiEnter .4s ease both;
+}
+.home-kpi-card:nth-child(1) { animation-delay:.05s; }
+.home-kpi-card:nth-child(2) { animation-delay:.10s; }
+.home-kpi-card:nth-child(3) { animation-delay:.15s; }
+.home-kpi-card:nth-child(4) { animation-delay:.20s; }
+@keyframes kpiEnter {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.home-kpi-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:var(--border-2); }
+.home-kpi-card::before {
+  content:''; position:absolute;
+  top:0; left:0; right:0; height:3px;
+  border-radius:3px 3px 0 0;
+}
+.hkc-carbon::before { background:linear-gradient(90deg,var(--carbon),#34d399); }
+.hkc-water::before  { background:linear-gradient(90deg,var(--water),#7dd3fc); }
+.hkc-waste::before  { background:linear-gradient(90deg,var(--waste),#fcd34d); }
+.hkc-recycle::before{ background:linear-gradient(90deg,var(--success),#6ee7b7); }
+.hkc-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+.hkc-icon {
+  width:38px; height:38px; border-radius:10px;
+  display:grid; place-items:center; flex-shrink:0;
+}
+.hkc-carbon .hkc-icon { background:var(--carbon-soft); color:var(--carbon); }
+.hkc-water  .hkc-icon { background:var(--water-soft);  color:var(--water); }
+.hkc-waste  .hkc-icon { background:var(--waste-soft);  color:var(--waste); }
+.hkc-recycle.hkc-icon, .hkc-recycle .hkc-icon { background:var(--green-100); color:var(--success); }
+.hkc-icon svg { width:18px; height:18px; }
+.hkc-badge {
+  font-size:9.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+  padding:3px 8px; border-radius:999px;
+  background:var(--bg-warm); color:var(--text-muted); border:1px solid var(--border);
+}
+.hkc-value {
+  font-family:var(--font-display); font-size:36px; font-weight:500;
+  line-height:1; color:var(--ink); letter-spacing:-0.025em;
+  margin-bottom:4px; transition:all .3s ease;
+}
+.hkc-value em { font-style:italic; }
+.hkc-unit {
+  font-size:11px; color:var(--text-muted); font-weight:600;
+  text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px;
+}
+.hkc-delta { font-size:12px; color:var(--text-dim); font-weight:500; margin-bottom:14px; min-height:16px; }
+.hkc-delta.good { color:var(--success); }
+.hkc-delta.warn { color:var(--warning); }
+.hkc-bar { height:4px; background:var(--bg-warm); border-radius:2px; overflow:hidden; margin-bottom:12px; }
+.hkc-bar-fill { height:100%; border-radius:2px; width:0%; transition:width .8s cubic-bezier(.4,0,.2,1); }
+.hkc-bar-carbon { background:linear-gradient(90deg,var(--carbon),#34d399); }
+.hkc-bar-water  { background:linear-gradient(90deg,var(--water),#7dd3fc); }
+.hkc-bar-waste  { background:linear-gradient(90deg,var(--waste),#fcd34d); }
+.hkc-bar-recycle{ background:linear-gradient(90deg,var(--success),#6ee7b7); }
+.hkc-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:11.5px; color:var(--text-muted); font-weight:600;
+}
+.hkc-arrow { font-size:14px; transition:transform .2s; color:var(--text-muted); }
+.home-kpi-card:hover .hkc-arrow { transform:translateX(4px); color:var(--ink); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: relative; height: auto; }
+  .grid-2, .grid-3, .grid-2-1, .pillars { grid-template-columns: 1fr; }
+  .content { padding: 18px; }
+  .dashboard-title-block h1 { font-size: 28px; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============================================================
+       SIDEBAR
+  ============================================================ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">EcoTrack</div>
+        <div class="brand-sub">Gestión Ambiental</div>
+      </div>
+    </div>
+
+    <div class="nav-section-title">Principal</div>
+    <button class="nav-item active" data-view="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Dashboard
+    </button>
+
+    <div class="nav-section-title">Módulos</div>
+    <button class="nav-item" data-view="carbon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+      Huella de Carbono
+      <span class="nav-count" id="nav-carbon-count"></span>
+    </button>
+    <button class="nav-item" data-view="water">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+      Huella Hídrica
+      <span class="nav-count" id="nav-water-count"></span>
+    </button>
+    <button class="nav-item" data-view="waste">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      Gestión de Residuos
+      <span class="nav-count" id="nav-waste-count"></span>
+    </button>
+
+    <div class="nav-section-title">Configuración</div>
+    <button class="nav-item" data-view="factors">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Factores Emisión
+    </button>
+    <button class="nav-item" data-view="data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+      Datos Cargados
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="theme-toggle" id="theme-toggle">
+        <button data-theme="light" class="active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          Claro
+        </button>
+        <button data-theme="dark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Oscuro
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       MAIN
+  ============================================================ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-sub" id="topbar-sub">Panel general de indicadores ambientales</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" id="btn-load-demo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
+          Datos demo
+        </button>
+        <button class="btn" id="btn-export-pdf">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF
+        </button>
+        <button class="btn btn-primary" id="btn-export-xlsx">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ============= DASHBOARD / INICIO ============= -->
+      <section class="view active" id="view-home">
+        <!-- Header del dashboard -->
+        <div class="dashboard-header">
+          <div class="dashboard-title-block">
+            <div class="eyebrow">Panel Ejecutivo</div>
+            <h1>Indicadores <em style="font-style:italic;color:var(--green-600)">ambientales</em> en tiempo real</h1>
+            <p>Supervisa el desempeño consolidado de huella de carbono, consumo hídrico y gestión de residuos en todas las plantas.</p>
+          </div>
+          <div class="dashboard-meta">
+            <span class="meta-chip live">Sistema activo</span>
+            <span class="meta-chip" id="meta-updated">Sin datos</span>
+            <span class="meta-chip" id="meta-period">—</span>
+          </div>
+        </div>
+
+        <!-- KPI Cards animadas — fila principal -->
+        <div class="home-kpi-grid">
+          <!-- CARBONO -->
+          <div class="home-kpi-card hkc-carbon" data-goto="carbon">
+            <div class="hkc-top">
+              <div class="hkc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+              </div>
+              <div class="hkc-badge">GHG Protocol</div>
+            </div>
+            <div class="hkc-value" id="hs-carbon">—</div>
+            <div class="hkc-unit">tnCO₂eq emitidas</div>
+            <div class="hkc-delta" id="hd-carbon">Sin registros</div>
+            <div class="hkc-bar"><div class="hkc-bar-fill hkc-bar-carbon" id="hbar-carbon"></div></div>
+            <div class="hkc-footer">
+              <span id="pill-carbon">0 registros</span>
+              <span class="hkc-arrow">→</span>
+            </div>
+          </div>
+          <!-- AGUA -->
+          <div class="home-kpi-card hkc-water" data-goto="water">
+            <div class="hkc-top">
+              <div class="hkc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+              </div>
+              <div class="hkc-badge">ISO 14046</div>
+            </div>
+            <div class="hkc-value" id="hs-water">—</div>
+            <div class="hkc-unit">m³ consumo agua</div>
+            <div class="hkc-delta" id="hd-water">Sin registros</div>
+            <div class="hkc-bar"><div class="hkc-bar-fill hkc-bar-water" id="hbar-water"></div></div>
+            <div class="hkc-footer">
+              <span id="pill-water">0 registros</span>
+              <span class="hkc-arrow">→</span>
+            </div>
+          </div>
+          <!-- RESIDUOS -->
+          <div class="home-kpi-card hkc-waste" data-goto="waste">
+            <div class="hkc-top">
+              <div class="hkc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg>
+              </div>
+              <div class="hkc-badge">Trazabilidad</div>
+            </div>
+            <div class="hkc-value" id="hs-waste">—</div>
+            <div class="hkc-unit">kg residuos generados</div>
+            <div class="hkc-delta" id="hd-waste">Sin registros</div>
+            <div class="hkc-bar"><div class="hkc-bar-fill hkc-bar-waste" id="hbar-waste"></div></div>
+            <div class="hkc-footer">
+              <span id="pill-waste">0 registros</span>
+              <span class="hkc-arrow">→</span>
+            </div>
+          </div>
+          <!-- RECICLAJE -->
+          <div class="home-kpi-card hkc-recycle" data-goto="waste">
+            <div class="hkc-top">
+              <div class="hkc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/></svg>
+              </div>
+              <div class="hkc-badge">Economía circular</div>
+            </div>
+            <div class="hkc-value" id="hs-recycle">—</div>
+            <div class="hkc-unit">% tasa de reciclaje</div>
+            <div class="hkc-delta" id="hd-recycle">Sin registros</div>
+            <div class="hkc-bar"><div class="hkc-bar-fill hkc-bar-recycle" id="hbar-recycle"></div></div>
+            <div class="hkc-footer">
+              <span id="hs-plants">—</span>
+              <span class="hkc-arrow" id="hd-plants">plantas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- IA Insights -->
+        <div class="ai-insights" id="ai-insights-container">
+          <div class="ai-insights-header">
+            <span class="ai-badge">IA Copilot</span>
+            <span class="ai-title">Insights detectados automáticamente</span>
+          </div>
+          <div id="home-alerts"></div>
+        </div>
+
+        <!-- Gráficos row 1 -->
+        <div class="grid-2-1">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-eyebrow">Evolución temporal</div>
+                <div class="panel-title">Tendencia consolidada</div>
+                <div class="panel-sub">Agua · Residuos · Emisiones por mes</div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-home-trend"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-eyebrow">Composición</div>
+                <div class="panel-title">Fuentes de emisión</div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-home-impact"></canvas></div>
+          </div>
+        </div>
+        <!-- Gráficos row 2 -->
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-eyebrow">Comparativo</div>
+                <div class="panel-title">Consumo agua por planta</div>
+              </div>
+            </div>
+            <div class="chart-wrap sm"><canvas id="chart-home-water-plant"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-eyebrow">Comparativo</div>
+                <div class="panel-title">Residuos por tipo</div>
+              </div>
+            </div>
+            <div class="chart-wrap sm"><canvas id="chart-home-waste-type"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= HUELLA HÍDRICA ============= -->
+      <section class="view" id="view-water">
+        <!-- Segmentadores arriba -->
+        <div class="segments" id="water-filters"></div>
+
+        <div id="water-dashboard-empty" style="display:block">
+          <div class="panel">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+              </div>
+              <div class="empty-title">Sin datos cargados</div>
+              <div class="empty-sub">Usa los datos demo o carga tu archivo Excel al final de esta página</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="water-dashboard" style="display:none">
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-water">
+              <div class="kpi-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+              </div>
+              <div class="kpi-label">Consumo total</div>
+              <div class="kpi-value" id="k-water-total">0<span class="kpi-unit">m³</span></div>
+            </div>
+            <div class="kpi-card kpi-water">
+              <div class="kpi-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div class="kpi-label">Promedio diario</div>
+              <div class="kpi-value" id="k-water-avg">0<span class="kpi-unit">m³/día</span></div>
+            </div>
+            <div class="kpi-card kpi-water">
+              <div class="kpi-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              </div>
+              <div class="kpi-label">Plantas monitoreadas</div>
+              <div class="kpi-value" id="k-water-plants">0</div>
+            </div>
+            <div class="kpi-card kpi-water">
+              <div class="kpi-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m12 2 0 20M2 12l20 0"/></svg>
+              </div>
+              <div class="kpi-label">Medidor top</div>
+              <div class="kpi-value" id="k-water-top" style="font-size:18px;font-family:var(--font);font-weight:700">—</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Distribución</div><div class="panel-title">Consumo por planta</div></div></div>
+              <div class="chart-wrap"><canvas id="chart-water-plant"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Ranking</div><div class="panel-title">Top medidores</div></div></div>
+              <div class="chart-wrap"><canvas id="chart-water-meter"></canvas></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><div class="panel-eyebrow">Evolución temporal</div><div class="panel-title">Tendencia mensual</div></div></div>
+            <div class="chart-wrap"><canvas id="chart-water-trend"></canvas></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="water-record-count">0</span> registros</div></div></div>
+            <div class="table-wrap table-compact"><table class="table" id="table-water"></table></div>
+          </div>
+        </div>
+
+        <!-- Formulario ingreso manual AGUA -->
+        <div class="form-manual" id="form-water-wrap">
+          <div class="form-manual-header" id="form-water-toggle">
+            <div class="form-manual-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+            </div>
+            <div class="form-manual-label">
+              <div class="form-manual-title">Ingreso manual de lectura <span class="manual-badge" id="badge-water-manual">0</span></div>
+              <div class="form-manual-sub">Registro rápido · guardias · supervisores · personal operativo</div>
+            </div>
+            <div class="form-manual-toggle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="form-manual-body">
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">Fecha <span class="req">*</span></label>
+                <input class="form-input" type="date" id="fw-fecha">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Sucursal / Planta <span class="req">*</span></label>
+                <select class="form-input" id="fw-planta">
+                  <option value="">— Seleccionar —</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Medidor <span class="req">*</span></label>
+                <select class="form-input" id="fw-medidor">
+                  <option value="">— Seleccionar —</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Lectura anterior</label>
+                <input class="form-input" type="number" id="fw-lect-ant" placeholder="Auto" readonly style="background:var(--bg-warm);cursor:not-allowed;color:var(--text-muted)">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Lectura actual <span class="req">*</span></label>
+                <input class="form-input" type="number" id="fw-lect-act" placeholder="0.00" min="0" step="0.01">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Consumo (m³) — calculado</label>
+                <input class="form-input" type="number" id="fw-consumo" placeholder="Auto" readonly style="background:var(--bg-warm);cursor:not-allowed;font-weight:700">
+              </div>
+            </div>
+            <!-- Alerta lectura inválida -->
+            <div id="fw-alert-lectura" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(220,38,38,.08);border:1px solid var(--danger);border-radius:var(--r-sm);color:var(--danger);font-size:12.5px;font-weight:600;">
+              ⚠️ La lectura actual no puede ser menor que la lectura anterior. Verifica el valor ingresado.
+            </div>
+            <div class="form-footer">
+              <button class="btn-save-record" id="btn-save-water">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Guardar registro
+              </button>
+              <button class="btn-clear-form" id="btn-clear-water-form">Limpiar</button>
+              <div class="form-feedback" id="feedback-water">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span id="feedback-water-msg">Registro guardado correctamente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload al final -->
+        <div class="upload-panel">
+          <div class="upload-panel-title">Ingesta de datos</div>
+          <label class="upload-zone" id="upload-water">
+            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-water">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+            <p>Formato: FECHA · SUCURSAL · MEDIDOR · LECTURA_ANTERIOR · LECTURA_ACTUAL · CONSUMO · UNIDAD</p>
+          </label>
+          <div class="howto">
+            <b>¿Cómo funciona?</b> Carga un archivo Excel (.xlsx) con los registros de consumo de agua. El sistema detecta automáticamente las columnas, calcula consumos totales por planta y medidor, e identifica puntos calientes.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= RESIDUOS ============= -->
+      <section class="view" id="view-waste">
+        <div class="segments" id="waste-filters"></div>
+
+        <div id="waste-dashboard-empty" style="display:block">
+          <div class="panel">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg>
+              </div>
+              <div class="empty-title">Sin datos cargados</div>
+              <div class="empty-sub">Usa los datos demo o carga tu archivo Excel al final de esta página</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="waste-dashboard" style="display:none">
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-waste">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg></div>
+              <div class="kpi-label">Residuos totales</div>
+              <div class="kpi-value" id="k-waste-total">0<span class="kpi-unit">kg</span></div>
+            </div>
+            <div class="kpi-card kpi-recycle">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+              <div class="kpi-label">Tasa de reciclaje</div>
+              <div class="kpi-value" id="k-waste-recycle">0<span class="kpi-unit">%</span></div>
+            </div>
+            <div class="kpi-card kpi-waste">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg></div>
+              <div class="kpi-label">Residuos peligrosos</div>
+              <div class="kpi-value" id="k-waste-hazard">0<span class="kpi-unit">kg</span></div>
+            </div>
+            <div class="kpi-card kpi-recycle">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></div>
+              <div class="kpi-label">Aprovechables</div>
+              <div class="kpi-value" id="k-waste-recyclable">0<span class="kpi-unit">kg</span></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Composición</div><div class="panel-title">Por categoría</div></div></div>
+              <div class="chart-wrap"><canvas id="chart-waste-cat"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Ranking</div><div class="panel-title">Top subcategorías</div></div></div>
+              <div class="chart-wrap"><canvas id="chart-waste-sub"></canvas></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><div class="panel-eyebrow">Evolución temporal</div><div class="panel-title">Generación mensual por tipo</div></div></div>
+            <div class="chart-wrap"><canvas id="chart-waste-trend"></canvas></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="waste-record-count">0</span> registros</div></div></div>
+            <div class="table-wrap table-compact"><table class="table" id="table-waste"></table></div>
+          </div>
+        </div>
+
+        <!-- Formulario ingreso manual RESIDUOS -->
+        <div class="form-manual" id="form-waste-wrap">
+          <div class="form-manual-header" id="form-waste-toggle">
+            <div class="form-manual-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <div class="form-manual-label">
+              <div class="form-manual-title">Ingreso manual de residuos <span class="manual-badge" id="badge-waste-manual">0</span></div>
+              <div class="form-manual-sub">Registro rápido · guardias · supervisores · personal operativo</div>
+            </div>
+            <div class="form-manual-toggle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="form-manual-body">
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">Fecha <span class="req">*</span></label>
+                <input class="form-input" type="date" id="fwr-fecha">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Sucursal / Planta <span class="req">*</span></label>
+                <select class="form-input" id="fwr-planta">
+                  <option value="">— Seleccionar —</option>
+                </select>
+                <input class="form-input" type="text" id="fwr-planta-nuevo" placeholder="Nombre de la nueva planta" style="display:none;margin-top:6px">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Tipo de residuo <span class="req">*</span></label>
+                <select class="form-input" id="fwr-tipo">
+                  <option value="">— Seleccionar —</option>
+                  <option value="PELIGROSO">Residuo Peligroso</option>
+                  <option value="RECICLABLE">Residuo Reciclable</option>
+                  <option value="NO APROVECHABLE">Residuo No Aprovechable</option>
+                  <option value="OTROS">Otros</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Subcategoría <span class="req">*</span></label>
+                <select class="form-input" id="fwr-sub">
+                  <option value="">— Seleccionar —</option>
+                </select>
+                <input class="form-input" type="text" id="fwr-sub-nuevo" placeholder="Nombre de la nueva subcategoría" style="display:none;margin-top:6px">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Cantidad generada <span class="req">*</span></label>
+                <input class="form-input" type="number" id="fwr-cantidad" placeholder="0.00" min="0" step="0.01">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Unidad <span class="req">*</span></label>
+                <select class="form-input" id="fwr-unidad">
+                  <option value="KG">kg (kilogramos)</option>
+                  <option value="TN">tn (toneladas)</option>
+                  <option value="LT">lt (litros)</option>
+                  <option value="M3">m³ (metros cúbicos)</option>
+                  <option value="UN">un (unidades)</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Cantidad reciclada</label>
+                <input class="form-input" type="number" id="fwr-reciclada" placeholder="0.00" min="0" step="0.01">
+              </div>
+            </div>
+            <div class="form-footer">
+              <button class="btn-save-record" id="btn-save-waste">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Guardar registro
+              </button>
+              <button class="btn-clear-form" id="btn-clear-waste-form">Limpiar</button>
+              <div class="form-feedback" id="feedback-waste">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span id="feedback-waste-msg">Registro guardado correctamente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="upload-panel">
+          <div class="upload-panel-title">Ingesta de datos</div>
+          <label class="upload-zone" id="upload-waste">
+            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-waste">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+            <p>Formato: FECHA · PLANTA · CATEGORÍA PRINCIPAL · SUBCATEGORÍA · CANTIDAD · UNIDAD</p>
+          </label>
+          <div class="howto">
+            <b>¿Cómo funciona?</b> El sistema clasifica automáticamente los residuos en <b>Peligrosos</b>, <b>Reciclables</b> y <b>No aprovechables</b> según la categoría. Calcula tasas de reciclaje y detecta desviaciones respecto a benchmarks del sector industrial.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= HUELLA CARBONO ============= -->
+      <section class="view" id="view-carbon">
+        <div class="segments" id="carbon-filters"></div>
+
+        <div id="carbon-dashboard-empty" style="display:block">
+          <div class="panel">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+              </div>
+              <div class="empty-title">Sin datos cargados</div>
+              <div class="empty-sub">Usa los datos demo o carga tu archivo Excel al final de esta página</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="carbon-dashboard" style="display:none">
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-carbon">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg></div>
+              <div class="kpi-label">Emisiones totales</div>
+              <div class="kpi-value" id="k-carbon-total">0<span class="kpi-unit">tnCO₂eq</span></div>
+            </div>
+            <div class="kpi-card kpi-carbon">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18M12 2v20M2 12h20"/></svg></div>
+              <div class="kpi-label">Fuente principal</div>
+              <div class="kpi-value" id="k-carbon-top" style="font-size:16px;font-family:var(--font);font-weight:700">—</div>
+            </div>
+            <div class="kpi-card kpi-carbon">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+              <div class="kpi-label">Registros</div>
+              <div class="kpi-value" id="k-carbon-records">0</div>
+            </div>
+            <div class="kpi-card kpi-carbon">
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+              <div class="kpi-label">Intensidad mensual</div>
+              <div class="kpi-value" id="k-carbon-avg">0<span class="kpi-unit">tn/mes</span></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Composición</div><div class="panel-title">Por fuente</div></div></div>
+              <div class="chart-wrap"><canvas id="chart-carbon-source"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Distribución</div><div class="panel-title">Por planta</div></div></div>
+              <div class="chart-wrap"><canvas id="chart-carbon-plant"></canvas></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><div class="panel-eyebrow">Evolución temporal</div><div class="panel-title">Tendencia de emisiones</div></div></div>
+            <div class="chart-wrap"><canvas id="chart-carbon-trend"></canvas></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Detalle de emisiones</div><div class="panel-sub"><span id="carbon-record-count">0</span> registros con factor aplicado</div></div></div>
+            <div class="table-wrap table-compact"><table class="table" id="table-carbon"></table></div>
+          </div>
+        </div>
+
+        <!-- Formulario ingreso manual CARBONO -->
+        <div class="form-manual" id="form-carbon-wrap">
+          <div class="form-manual-header" id="form-carbon-toggle">
+            <div class="form-manual-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+            </div>
+            <div class="form-manual-label">
+              <div class="form-manual-title">Ingreso manual de consumo / emisión <span class="manual-badge" id="badge-carbon-manual">0</span></div>
+              <div class="form-manual-sub">Registro rápido · guardias · supervisores · personal operativo</div>
+            </div>
+            <div class="form-manual-toggle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="form-manual-body">
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">Fecha <span class="req">*</span></label>
+                <input class="form-input" type="date" id="fc-fecha">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Sucursal / Planta <span class="req">*</span></label>
+                <select class="form-input" id="fc-planta">
+                  <option value="">— Seleccionar —</option>
+                </select>
+                <input class="form-input" type="text" id="fc-planta-nuevo" placeholder="Nombre de la nueva planta" style="display:none;margin-top:6px">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Fuente de emisión <span class="req">*</span></label>
+                <select class="form-input" id="fc-fuente">
+                  <option value="">— Seleccionar —</option>
+                  <option value="Consumo energético">Energía eléctrica</option>
+                  <option value="Combustible">Combustible</option>
+                  <option value="Consumo de gas">Gas</option>
+                  <option value="Residuo Peligroso">Residuo Peligroso</option>
+                  <option value="Residuo reciclable">Residuo Reciclable</option>
+                  <option value="Transporte">Transporte</option>
+                  <option value="Otros">Otros</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Tipo de consumo <span class="req">*</span></label>
+                <select class="form-input" id="fc-tipo">
+                  <option value="">— Seleccionar fuente primero —</option>
+                </select>
+                <input class="form-input" type="text" id="fc-tipo-nuevo" placeholder="Nombre del nuevo tipo" style="display:none;margin-top:6px">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Cantidad consumida <span class="req">*</span></label>
+                <input class="form-input" type="number" id="fc-cantidad" placeholder="0.00" min="0" step="0.01">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Unidad <span class="req">*</span></label>
+                <select class="form-input" id="fc-unidad">
+                  <option value="kWh">kWh (electricidad)</option>
+                  <option value="lt">Litros</option>
+                  <option value="m3">m³ (gas/agua)</option>
+                  <option value="KG">kg (kilogramos)</option>
+                  <option value="TN">tn (toneladas)</option>
+                  <option value="galones">Galones</option>
+                </select>
+              </div>
+            </div>
+            <!-- Preview tCO2e calculado en tiempo real -->
+            <div style="margin-bottom:14px;padding:12px 16px;background:var(--bg-warm);border-radius:var(--r-sm);border-left:3px solid var(--green-600);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+              <span style="font-size:12.5px;color:var(--text-dim);font-weight:500">tnCO₂eq estimadas:</span>
+              <span id="fc-preview-tco2e" style="font-size:15px;font-weight:700;color:var(--carbon)">—</span>
+              <span style="font-size:11px;color:var(--text-muted)">· Factor: <span id="fc-preview-factor">—</span></span>
+            </div>
+            <div class="form-footer">
+              <button class="btn-save-record" id="btn-save-carbon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Guardar registro
+              </button>
+              <button class="btn-clear-form" id="btn-clear-carbon-form">Limpiar</button>
+              <div class="form-feedback" id="feedback-carbon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span id="feedback-carbon-msg">Registro guardado correctamente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="upload-panel">
+          <div class="upload-panel-title">Ingesta de datos</div>
+          <label class="upload-zone" id="upload-carbon">
+            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-carbon">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+            <p>Incluye consumos energéticos, combustibles y residuos — cálculo automático de tnCO₂eq</p>
+          </label>
+          <div class="howto">
+            <b>¿Cómo funciona?</b> La plataforma aplica automáticamente los <b>factores de emisión</b> configurados para convertir cada actividad (Electricidad, Gas natural, Diesel, Gasolina, residuos) en toneladas de CO₂ equivalente. Alineado con GHG Protocol e ISO 14064. <button class="btn" id="btn-goto-factors" style="margin-top:8px;padding:6px 12px;font-size:11px">Configurar factores →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============= FACTORES ============= -->
+      <section class="view" id="view-factors">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-eyebrow">Configuración</div>
+              <div class="panel-title">Factores de emisión</div>
+              <div class="panel-sub">Referenciales para Bolivia · Alineados con GHG Protocol e ISO 14064 · Editables</div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn" id="btn-add-factor">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Nuevo factor
+              </button>
+              <button class="btn btn-primary" id="btn-save-factors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                Guardar y recalcular
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="table-factors"></table></div>
+        </div>
+      </section>
+
+      <!-- ============= DATOS ============= -->
+      <section class="view" id="view-data">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-eyebrow">Sistema</div>
+              <div class="panel-title">Datos cargados</div>
+              <div class="panel-sub">Gestión de registros en memoria · Real vs Demo</div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn" id="btn-clear-demo" style="color:var(--warning);border-color:var(--warning)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
+                Quitar solo demo
+              </button>
+              <button class="btn btn-danger" id="btn-clear-data">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg>
+                Limpiar todo
+              </button>
+            </div>
+          </div>
+          <div id="data-summary"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
+const state = {
+  water: [], waste: [], carbon: [],
+  factors: {},
+  filters: {
+    water:  { year: 'all', month: 'all', planta: 'all', medidor: 'all' },
+    waste:  { year: 'all', month: 'all', planta: 'all', categoria: 'all' },
+    carbon: { year: 'all', month: 'all', planta: 'all', categoria: 'all' },
+  },
+  currentView: 'home',
+  charts: {},
+  theme: 'light',
+};
+
+const DEFAULT_FACTORS = {
+  'ACEITE NEGRO': 0.0025, 'BATERIAS EN DESUSO': 0.0170, 'CONJUNTO PLASTICO': 0.0030,
+  'DOCUMENTACION DE ARCHIVO': 0.0015, 'EMPETROLADOS': 0.0035, 'EPPS EN DESUSO': 0.0020,
+  'ESCORIA': 0.0012, 'MANGAS FILTRANTES CON PLOMO': 0.0100, 'MATERIAL PARA PICADO': 0.0025,
+  'PRODUCTO DE MARKETING DESCONTINUADO': 0.0030, 'RAEE': 0.0080, 'SEPARADORES': 0.0025,
+  'SOBRES EN DESUSO': 0.0012, 'SOGAS': 0.0020, 'CARTON': 0.0017, 'PLASTICO': 0.0030,
+  'BOBINAS': 0.0016, 'PALLET': 0.0014, 'OFICINA': 0.0015, 'PET': 0.0028,
+  'BIDONES (SOPLO)': 0.0030, 'ELECTRICIDAD': 0.000395, 'GAS NATURAL': 0.002985,
+  'DIESEL': 0.002549, 'GASOLINA': 0.002149,
+};
+
+/* Paletas adaptativas */
+function getChartColors() {
+  const dark = state.theme === 'dark';
+  return dark
+    ? ['#5cc194', '#9dd9b6', '#60a5fa', '#f5b947', '#e87462', '#a8c268', '#c78aec', '#7cdce2', '#f472b6', '#fb923c']
+    : ['#1e5340', '#2d7a5f', '#3ea07a', '#5cc194', '#9dd9b6', '#3b82c4', '#c77a2a', '#7c9a3d', '#b94a3c', '#8a968e'];
+}
+function getC() {
+  const dark = state.theme === 'dark';
+  return {
+    water: dark ? '#60a5fa' : '#3b82c4',
+    waste: dark ? '#f5b947' : '#c77a2a',
+    carbon: dark ? '#a8c268' : '#7c9a3d',
+    green: dark ? '#5cc194' : '#1e5340',
+  };
+}
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+const norm = s => String(s || '').trim().toUpperCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+const fmt = (n, dec=2) => {
+  if (n === null || n === undefined || isNaN(n)) return '0';
+  const num = Number(n);
+  if (Math.abs(num) >= 1e6) return (num/1e6).toFixed(2) + 'M';
+  if (Math.abs(num) >= 1e3) return (num/1e3).toFixed(1) + 'K';
+  return num.toLocaleString('es-BO', { maximumFractionDigits: dec });
+};
+const fmtFull = (n, dec=2) => {
+  if (n === null || n === undefined || isNaN(n)) return '0';
+  return Number(n).toLocaleString('es-BO', { maximumFractionDigits: dec, minimumFractionDigits: 0 });
+};
+const parseDate = d => {
+  if (!d) return null;
+  if (d instanceof Date) return d;
+  if (typeof d === 'number') {
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    return new Date(epoch.getTime() + d * 86400000);
+  }
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+const yearMonth = d => {
+  if (!d) return '';
+  const dt = d instanceof Date ? d : parseDate(d);
+  if (!dt) return '';
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+};
+const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const monthLabel = ym => {
+  const [y,m] = ym.split('-');
+  return `${monthNames[parseInt(m,10)-1]} ${y}`;
+};
+const UNIT_TO_KG = {
+  'KG': 1, 'G': 0.001, 'TN': 1000, 'T': 1000,
+  'LT': 0.92, 'L': 0.92, 'LITROS': 0.92,
+  'M3': 1000, 'KWH': 0, 'UN': 0, 'PZA': 0,
+};
+
+function toast(title, msg, type='success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<div class="toast-title">${title}</div>${msg ? `<div class="toast-msg">${msg}</div>` : ''}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=> el.remove(), 4000);
+}
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function setTheme(theme) {
+  state.theme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('#theme-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === theme);
+  });
+  // Re-render charts with new theme colors
+  updateChartDefaults();
+  rerenderAll();
+  try { localStorage.setItem('ecotrack-theme', theme); } catch(e) {}
+}
+
+function updateChartDefaults() {
+  const style = getComputedStyle(document.documentElement);
+  Chart.defaults.color = style.getPropertyValue('--chart-axis').trim() || '#8a968e';
+  Chart.defaults.borderColor = style.getPropertyValue('--border').trim() || '#e2dfd4';
+}
+
+function rerenderAll() {
+  if (state.currentView === 'home') renderHome();
+  if (state.currentView === 'water') renderWater();
+  if (state.currentView === 'waste') renderWaste();
+  if (state.currentView === 'carbon') renderCarbon();
+}
+
+document.querySelectorAll('#theme-toggle button').forEach(b => {
+  b.addEventListener('click', () => setTheme(b.dataset.theme));
+});
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => btn.dataset.view && switchView(btn.dataset.view));
+});
+document.querySelectorAll('.pillar').forEach(p => {
+  p.addEventListener('click', () => switchView(p.dataset.goto));
+});
+
+function switchView(view) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === `view-${view}`));
+  state.currentView = view;
+
+  const titles = {
+    home:    { t: 'Dashboard',          s: 'Panel general de indicadores ambientales' },
+    water:   { t: 'Huella Hídrica',     s: 'Seguimiento del consumo de agua por planta y medidor' },
+    waste:   { t: 'Gestión de Residuos', s: 'Trazabilidad de generación y aprovechamiento' },
+    carbon:  { t: 'Huella de Carbono',  s: 'Emisiones de CO₂ equivalente por fuente' },
+    factors: { t: 'Factores de Emisión', s: 'Parámetros referenciales para el cálculo de impacto' },
+    data:    { t: 'Datos Cargados',     s: 'Gestión de la base de datos local' },
+  };
+  document.getElementById('topbar-title').textContent = titles[view].t;
+  document.getElementById('topbar-sub').textContent   = titles[view].s;
+
+  if (view === 'home')    renderHome();
+  if (view === 'water')   renderWater();
+  if (view === 'waste')   renderWaste();
+  if (view === 'carbon')  renderCarbon();
+  if (view === 'factors') renderFactors();
+  if (view === 'data')    renderDataSummary();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   UPLOADS
+   ============================================================ */
+function setupUpload(uploadId, fileId, handler) {
+  const zone = document.getElementById(uploadId);
+  const input = document.getElementById(fileId);
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], handler);
+  });
+  input.addEventListener('change', e => {
+    if (e.target.files.length) handleFile(e.target.files[0], handler);
+  });
+}
+function handleFile(file, handler) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      handler(wb);
+    } catch(err) {
+      toast('Error al leer archivo', err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function getCol(row, ...candidates) {
+  const keys = Object.keys(row);
+  for (const c of candidates) {
+    const n = norm(c);
+    const match = keys.find(k => norm(k) === n);
+    if (match !== undefined) return row[match];
+  }
+  return undefined;
+}
+
+function parseWater(wb) {
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+  const parsed = [];
+  for (const r of rows) {
+    const fecha    = parseDate(getCol(r, 'FECHA'));
+    const sucursal = getCol(r, 'SUCURSAL', 'PLANTA');
+    const medidor  = getCol(r, 'MEDIDOR');
+
+    // Leer lectura actual y anterior directamente del Excel (con o sin espacios en nombre)
+    const lAct  = parseFloat(getCol(r, 'LECTURA_ACTUAL',   'LECTURA ACTUAL'));
+    const lAnt  = parseFloat(getCol(r, 'LECTURA_ANTERIOR', 'LECTURA ANTERIOR'));
+    // Consumo: puede venir explícito en el Excel (columna 'CONSUMO' o 'CONSUMO ')
+    const consumoExcel = parseFloat(getCol(r, 'CONSUMO'));
+
+    if (!fecha || !sucursal) continue;
+    // Necesitamos al menos lectura actual o consumo explícito
+    if (isNaN(lAct) && isNaN(consumoExcel)) continue;
+
+    const lActVal = isNaN(lAct) ? 0 : lAct;
+    const lAntVal = isNaN(lAnt) ? null : lAnt; // null = no viene en el Excel
+
+    parsed.push({
+      fecha,
+      sucursal: String(sucursal).trim(),
+      medidor:  String(medidor || '').trim() || 'Sin medidor',
+      lectura_act: lActVal,
+      lectura_ant: lAntVal !== null ? lAntVal : lActVal, // provisional, se corrige abajo
+      consumo:  0,   // se calcula abajo
+      unidad:   String(getCol(r, 'UNIDAD') || 'm3').trim(),
+      // Guardamos lo que trajo el Excel para priorizar si es válido
+      _lant_excel:     lAntVal,
+      _consumo_excel:  !isNaN(consumoExcel) ? consumoExcel : null,
+    });
+  }
+  if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
+
+  // Calcular trazabilidad y consumo
+  calcularTrazabilidadAgua(parsed);
+
+  // Limpiar propiedades internas antes de guardar en state
+  parsed.forEach(r => { delete r._lant_excel; delete r._consumo_excel; });
+
+  state.water = parsed;
+  toast('Datos cargados', `${parsed.length} registros de huella hídrica`);
+  renderWater();
+  updateNavCounts();
+  updateHomeStats();
+  refreshAllDataLists();
+  updateManualBadges();
+  refreshDropdownsAll();
+}
+
+/**
+ * Calcula lectura_ant y consumo para cada registro.
+ *
+ * Reglas (por orden de prioridad):
+ * 1. Si el Excel trae CONSUMO explícito y válido (>= 0), se usa directamente.
+ * 2. Si el Excel trae LECTURA_ANTERIOR, el consumo = lAct - lAnt (del Excel).
+ * 3. Si no hay ninguna de las dos, se calcula la lectura anterior a partir
+ *    del último registro conocido del mismo medidor (trazabilidad automática).
+ * 4. Para el primer registro sin datos anteriores: lectura_ant = lectura_act, consumo = 0.
+ */
+function calcularTrazabilidadAgua(registros) {
+  // Agrupar por sucursal + medidor y ordenar por fecha
+  const grupos = {};
+  registros.forEach(r => {
+    const key = `${r.sucursal}||${r.medidor}`;
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(r);
+  });
+
+  Object.values(grupos).forEach(grupo => {
+    grupo.sort((a, b) => a.fecha - b.fecha);
+
+    grupo.forEach((r, i) => {
+      const consumoExplicito = r._consumo_excel;
+      const lAntExcel        = r._lant_excel;
+      const lAct             = r.lectura_act;
+
+      if (consumoExplicito !== null && consumoExplicito >= 0) {
+        // CASO 1: consumo viene explícito en el Excel — lo respetamos tal cual
+        r.consumo    = consumoExplicito;
+        r.lectura_ant = lAntExcel !== null ? lAntExcel
+                      : (i > 0 ? grupo[i-1].lectura_act : lAct);
+
+      } else if (lAntExcel !== null) {
+        // CASO 2: viene lectura anterior del Excel — calculamos consumo
+        r.lectura_ant = lAntExcel;
+        r.consumo     = Math.max(0, lAct - lAntExcel);
+
+      } else if (i > 0) {
+        // CASO 3: trazabilidad automática desde registro anterior del mismo medidor
+        r.lectura_ant = grupo[i-1].lectura_act;
+        r.consumo     = Math.max(0, lAct - r.lectura_ant);
+
+      } else {
+        // CASO 4: primer registro del medidor sin ningún dato anterior
+        r.lectura_ant = lAct;
+        r.consumo     = 0;
+      }
+    });
+  });
+}
+
+
+function parseWasteLike(wb) {
+  let best = null, bestCount = 0;
+  for (const name of wb.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: null });
+    if (rows.length === 0) continue;
+    const keys = Object.keys(rows[0]).map(norm);
+    if (keys.includes('CATEGORIA PRINCIPAL') && rows.length > bestCount) {
+      best = rows; bestCount = rows.length;
+    }
+  }
+  return best || XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: null });
+}
+
+function parseWaste(wb) {
+  const rows = parseWasteLike(wb);
+  const parsed = [];
+  for (const r of rows) {
+    const fecha       = parseDate(getCol(r, 'FECHA'));
+    const planta      = getCol(r, 'PLANTA');
+    const categoria   = getCol(r, 'CATEGORIA PRINCIPAL');
+    const subcategoria= getCol(r, 'SUBCATEGORIA');
+    const cantidad    = parseFloat(getCol(r, 'CANTIDAD'));
+    const unidad      = getCol(r, 'UNIDAD');
+    // Nueva columna opcional
+    const reciclada   = parseFloat(getCol(r, 'CANTIDAD RECICLADA', 'CANTIDAD_RECICLADA')) || 0;
+    if (!fecha || !categoria || isNaN(cantidad)) continue;
+    const cat  = String(categoria).trim();
+    const catN = norm(cat);
+    if (catN.includes('CONSUMO') || catN.includes('COMBUSTIBLE')) continue;
+    parsed.push({
+      fecha,
+      planta:        String(planta || '').trim(),
+      categoria:     cat,
+      subcategoria:  String(subcategoria || '').trim(),
+      cantidad,
+      unidad:        String(unidad || '').trim(),
+      _reciclada:    reciclada,
+      tipo: catN.includes('PELIGROSO')    ? 'PELIGROSO'       :
+            catN.includes('RECICLABLE')   ? 'RECICLABLE'      :
+            catN.includes('APROVECHABLE') ? 'NO APROVECHABLE' : 'OTROS',
+    });
+  }
+  if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
+  state.waste = parsed;
+  toast('Datos cargados', `${parsed.length} registros de residuos`);
+  renderWaste();
+  updateNavCounts();
+  updateHomeStats();
+  refreshAllDataLists();
+  updateManualBadges();
+  refreshDropdownsAll();
+}
+
+function parseCarbon(wb) {
+  const rows = parseWasteLike(wb);
+  const parsed = [];
+  for (const r of rows) {
+    const fecha = parseDate(getCol(r, 'FECHA'));
+    const planta = getCol(r, 'PLANTA');
+    const categoria = getCol(r, 'CATEGORIA PRINCIPAL');
+    const subcategoria = getCol(r, 'SUBCATEGORIA');
+    const cantidad = parseFloat(getCol(r, 'CANTIDAD'));
+    const unidad = getCol(r, 'UNIDAD');
+    const factorImp = parseFloat(getCol(r, 'FACTOR EMISION'));
+    const tco2eImp = parseFloat(getCol(r, 'TCO2E'));
+    if (!fecha || !subcategoria || isNaN(cantidad)) continue;
+    const subN = norm(subcategoria);
+    const factor = !isNaN(factorImp) ? factorImp : (state.factors[subN] ?? DEFAULT_FACTORS[subN] ?? 0);
+    const tco2e = !isNaN(tco2eImp) ? tco2eImp : cantidad * factor;
+    parsed.push({
+      fecha,
+      planta: String(planta || '').trim(),
+      categoria: String(categoria || '').trim(),
+      subcategoria: String(subcategoria).trim(),
+      cantidad, unidad: String(unidad || '').trim(),
+      factor, tco2e,
+    });
+  }
+  if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
+  state.carbon = parsed;
+  toast('Datos cargados', `${parsed.length} registros de emisiones`);
+  renderCarbon();
+  updateNavCounts();
+  updateHomeStats();
+  refreshAllDataLists();
+  updateManualBadges();
+  refreshDropdownsAll();
+}
+
+/* ============================================================
+   FILTROS SEGMENTADOS (fila única, compactos)
+   ============================================================ */
+function buildFilters(module, containerId, fields) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const data = state[module];
+  const filters = state.filters[module];
+
+  if (data.length === 0) {
+    container.innerHTML = '<span class="seg-label">Sin datos · carga un archivo Excel al final de la página</span>';
+    return;
+  }
+
+  const years = [...new Set(data.map(r => r.fecha && r.fecha.getFullYear()).filter(Boolean))].sort();
+  const months = [...new Set(data.map(r => r.fecha && (r.fecha.getMonth()+1)).filter(Boolean))].sort((a,b)=>a-b);
+
+  const addLabel = text => {
+    const l = document.createElement('span');
+    l.className = 'seg-label';
+    l.textContent = text;
+    container.appendChild(l);
+  };
+  const addDivider = () => {
+    const d = document.createElement('span');
+    d.className = 'seg-divider';
+    container.appendChild(d);
+  };
+  const addSelect = (key, options, placeholder) => {
+    const sel = document.createElement('select');
+    sel.className = 'seg-select';
+    sel.dataset.key = key;
+    sel.innerHTML = `<option value="all">${placeholder}</option>` +
+      options.map(o => `<option value="${o.value}" ${filters[key]==String(o.value) ? 'selected' : ''}>${o.label}</option>`).join('');
+    sel.addEventListener('change', e => {
+      filters[key] = e.target.value;
+      if (module === 'water') renderWater();
+      if (module === 'waste') renderWaste();
+      if (module === 'carbon') renderCarbon();
+    });
+    container.appendChild(sel);
+  };
+
+  addLabel('Filtros');
+  addSelect('year', years.map(y => ({value:y, label:y})), 'Todos los años');
+  addSelect('month', months.map(m => ({value:m, label:monthNames[m-1]})), 'Todos los meses');
+
+  addDivider();
+
+  fields.forEach(f => {
+    const values = [...new Set(data.map(r => r[f.field]).filter(Boolean))].sort();
+    addSelect(f.key, values.map(v => ({value:v, label:v})), `Todas · ${f.label}`);
+  });
+
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'seg-reset';
+  resetBtn.textContent = 'Limpiar';
+  resetBtn.addEventListener('click', () => {
+    Object.keys(filters).forEach(k => filters[k] = 'all');
+    if (module === 'water') renderWater();
+    if (module === 'waste') renderWaste();
+    if (module === 'carbon') renderCarbon();
+  });
+  container.appendChild(resetBtn);
+}
+
+function applyFilters(module) {
+  const f = state.filters[module];
+  return state[module].filter(r => {
+    if (!r.fecha) return false;
+    if (f.year !== 'all' && r.fecha.getFullYear() !== parseInt(f.year)) return false;
+    if (f.month !== 'all' && (r.fecha.getMonth()+1) !== parseInt(f.month)) return false;
+    if (module === 'water') {
+      if (f.planta !== 'all' && r.sucursal !== f.planta) return false;
+      if (f.medidor !== 'all' && r.medidor !== f.medidor) return false;
+    } else {
+      if (f.planta !== 'all' && r.planta !== f.planta) return false;
+      if (f.categoria !== 'all' && r.categoria !== f.categoria) return false;
+    }
+    return true;
+  });
+}
+
+/* ============================================================
+   CHARTS
+   ============================================================ */
+Chart.defaults.font.family = 'Plus Jakarta Sans';
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.padding = 14;
+
+function destroyChart(id) {
+  if (state.charts[id]) { state.charts[id].destroy(); delete state.charts[id]; }
+}
+function makeChart(id, config) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  state.charts[id] = new Chart(ctx, config);
+  return state.charts[id];
+}
+function chartOpts({ yLabel = '' } = {}) {
+  const style = getComputedStyle(document.documentElement);
+  const grid = style.getPropertyValue('--chart-grid').trim();
+  const axis = style.getPropertyValue('--chart-axis').trim();
+  const ink = style.getPropertyValue('--ink').trim();
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11, weight: '500' }, boxWidth: 8, boxHeight: 8 } },
+      tooltip: {
+        backgroundColor: state.theme === 'dark' ? '#0a1f16' : '#0a1f16',
+        titleColor: '#fff', bodyColor: '#fff',
+        borderColor: '#1e5340', borderWidth: 1,
+        padding: 12, titleFont: { weight: '700' }, bodyFont: { size: 12 },
+        cornerRadius: 8,
+        callbacks: {
+          label: c => `${c.dataset.label || ''}: ${fmtFull(c.parsed.y ?? c.parsed)} ${yLabel}`
+        }
+      }
+    },
+    scales: {
+      x: { grid: { color: grid, drawBorder: false }, ticks: { color: axis, font: { size: 10 } } },
+      y: {
+        grid: { color: grid, drawBorder: false },
+        title: { display: !!yLabel, text: yLabel, color: axis, font: { size: 10, weight: '600' } },
+        beginAtZero: true,
+        ticks: { color: axis, font: { size: 10 } }
+      }
+    }
+  };
+}
+
+/* ============================================================
+   MÓDULO AGUA
+   ============================================================ */
+function renderWater() {
+  const hasData = state.water.length > 0;
+  document.getElementById('water-dashboard').style.display = hasData ? 'block' : 'none';
+  document.getElementById('water-dashboard-empty').style.display = hasData ? 'none' : 'block';
+
+  buildFilters('water', 'water-filters', [
+    { field: 'sucursal', label: 'Planta', key: 'planta' },
+    { field: 'medidor', label: 'Medidor', key: 'medidor' },
+  ]);
+
+  if (!hasData) return;
+
+  const data = applyFilters('water');
+  const total = data.reduce((s,r) => s + r.consumo, 0);
+  const plantas = [...new Set(data.map(r => r.sucursal))];
+  const days = [...new Set(data.map(r => r.fecha.toISOString().slice(0,10)))].length || 1;
+
+  document.getElementById('k-water-total').innerHTML = `${fmtFull(total)}<span class="kpi-unit">m³</span>`;
+  document.getElementById('k-water-avg').innerHTML = `${fmt(total/days)}<span class="kpi-unit">m³/día</span>`;
+  document.getElementById('k-water-plants').innerHTML = plantas.length;
+
+  const meterTotals = {};
+  data.forEach(r => meterTotals[r.medidor] = (meterTotals[r.medidor]||0) + r.consumo);
+  const topMeter = Object.entries(meterTotals).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('k-water-top').textContent = topMeter ? topMeter[0] : '—';
+
+  const C = getC();
+  const COLORS = getChartColors();
+
+  const plantTotals = {};
+  data.forEach(r => plantTotals[r.sucursal] = (plantTotals[r.sucursal]||0) + r.consumo);
+  makeChart('chart-water-plant', {
+    type: 'bar',
+    data: {
+      labels: Object.keys(plantTotals),
+      datasets: [{ label: 'm³', data: Object.values(plantTotals), backgroundColor: C.water + 'dd', borderRadius: 6, borderSkipped: false }]
+    },
+    options: chartOpts({ yLabel: 'm³' })
+  });
+
+  const meterSorted = Object.entries(meterTotals).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  makeChart('chart-water-meter', {
+    type: 'bar',
+    data: {
+      labels: meterSorted.map(e => e[0]),
+      datasets: [{ label: 'm³', data: meterSorted.map(e => e[1]), backgroundColor: COLORS, borderRadius: 6, borderSkipped: false }]
+    },
+    options: { ...chartOpts({ yLabel: 'm³' }), indexAxis: 'y', plugins: { legend: { display: false }, tooltip: chartOpts().plugins.tooltip } }
+  });
+
+  const monthData = {};
+  data.forEach(r => {
+    const ym = yearMonth(r.fecha);
+    if (!monthData[ym]) monthData[ym] = {};
+    monthData[ym][r.sucursal] = (monthData[ym][r.sucursal] || 0) + r.consumo;
+  });
+  const months = Object.keys(monthData).sort();
+  const trendDatasets = plantas.map((p, i) => ({
+    label: p, data: months.map(m => monthData[m][p] || 0),
+    borderColor: COLORS[i % COLORS.length],
+    backgroundColor: COLORS[i % COLORS.length] + '20',
+    borderWidth: 2.5, tension: .35, fill: false, pointRadius: 4,
+    pointBackgroundColor: state.theme === 'dark' ? '#0c1510' : '#fff',
+    pointBorderWidth: 2,
+  }));
+  makeChart('chart-water-trend', {
+    type: 'line',
+    data: { labels: months.map(monthLabel), datasets: trendDatasets },
+    options: chartOpts({ yLabel: 'm³' })
+  });
+
+  renderWaterTable(data);
+  document.getElementById('water-record-count').textContent = data.length;
+}
+
+function renderWaterTable(data) {
+  const t = document.getElementById('table-water');
+  // Orden ascendente por fecha para que lant → lact → consumo sean coherentes visualmente
+  const top = [...data].sort((a,b) => a.fecha - b.fecha).slice(0, 500);
+  const c = getC();
+  t.innerHTML = `
+    <thead><tr>
+      <th>Fecha</th><th>Planta</th><th>Medidor</th>
+      <th class="num">L. anterior</th><th class="num">L. actual</th>
+      <th class="num">Consumo (m³)</th>
+    </tr></thead>
+    <tbody>${top.map(r => `
+        <tr>
+          <td>${r.fecha.toLocaleDateString('es-BO')}</td>
+          <td>${r.sucursal}</td>
+          <td>${r.medidor}</td>
+          <td class="num">${fmtFull(r.lectura_ant, 3)}</td>
+          <td class="num">${fmtFull(r.lectura_act, 3)}</td>
+          <td class="num" style="color:${r.consumo>0?c.water:'var(--text-muted)'};font-weight:${r.consumo>0?'700':'400'}">${fmtFull(r.consumo, 3)}</td>
+        </tr>`).join('')}</tbody>`;
+}
+
+/* ============================================================
+   MÓDULO RESIDUOS
+   ============================================================ */
+function renderWaste() {
+  const hasData = state.waste.length > 0;
+  document.getElementById('waste-dashboard').style.display = hasData ? 'block' : 'none';
+  document.getElementById('waste-dashboard-empty').style.display = hasData ? 'none' : 'block';
+
+  buildFilters('waste', 'waste-filters', [
+    { field: 'planta', label: 'Planta', key: 'planta' },
+    { field: 'categoria', label: 'Categoría', key: 'categoria' },
+  ]);
+
+  if (!hasData) return;
+
+  const data = applyFilters('waste');
+  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+  const total = data.reduce((s,r) => s + toKg(r), 0);
+  const hazard = data.filter(r => r.tipo === 'PELIGROSO').reduce((s,r) => s + toKg(r), 0);
+  const recyclable = data.filter(r => r.tipo === 'RECICLABLE').reduce((s,r) => s + toKg(r), 0);
+  const recycleRate = total > 0 ? (recyclable / total) * 100 : 0;
+
+  document.getElementById('k-waste-total').innerHTML = `${fmtFull(total)}<span class="kpi-unit">kg</span>`;
+  document.getElementById('k-waste-recycle').innerHTML = `${recycleRate.toFixed(1)}<span class="kpi-unit">%</span>`;
+  document.getElementById('k-waste-hazard').innerHTML = `${fmtFull(hazard)}<span class="kpi-unit">kg</span>`;
+  document.getElementById('k-waste-recyclable').innerHTML = `${fmtFull(recyclable)}<span class="kpi-unit">kg</span>`;
+
+  const COLORS = getChartColors();
+  const C = getC();
+  const bgSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+
+  const catTotals = {};
+  data.forEach(r => catTotals[r.categoria] = (catTotals[r.categoria]||0) + toKg(r));
+  makeChart('chart-waste-cat', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(catTotals),
+      datasets: [{ data: Object.values(catTotals), backgroundColor: COLORS, borderColor: bgSurface, borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, weight: '500' }, boxWidth: 8, boxHeight: 8 } },
+        tooltip: {
+          backgroundColor: '#0a1f16', padding: 12, cornerRadius: 8,
+          callbacks: { label: c => `${c.label}: ${fmtFull(c.parsed)} kg (${(c.parsed/total*100).toFixed(1)}%)` }
+        }
+      }
+    }
+  });
+
+  const subTotals = {};
+  data.forEach(r => subTotals[r.subcategoria] = (subTotals[r.subcategoria]||0) + toKg(r));
+  const subSorted = Object.entries(subTotals).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  makeChart('chart-waste-sub', {
+    type: 'bar',
+    data: {
+      labels: subSorted.map(e => e[0]),
+      datasets: [{ label: 'kg', data: subSorted.map(e => e[1]), backgroundColor: C.waste + 'dd', borderRadius: 6, borderSkipped: false }]
+    },
+    options: { ...chartOpts({ yLabel: 'kg' }), indexAxis: 'y', plugins: { legend: { display: false }, tooltip: chartOpts().plugins.tooltip } }
+  });
+
+  const monthData = {};
+  const types = [...new Set(data.map(r => r.tipo))];
+  data.forEach(r => {
+    const ym = yearMonth(r.fecha);
+    if (!monthData[ym]) monthData[ym] = {};
+    monthData[ym][r.tipo] = (monthData[ym][r.tipo] || 0) + toKg(r);
+  });
+  const months = Object.keys(monthData).sort();
+  const typeColors = state.theme === 'dark'
+    ? { 'PELIGROSO': '#e87462', 'RECICLABLE': '#5cc194', 'NO APROVECHABLE': '#f5b947', 'OTROS': '#9aa89f' }
+    : { 'PELIGROSO': '#b94a3c', 'RECICLABLE': '#2d7a5f', 'NO APROVECHABLE': '#c77a2a', 'OTROS': '#8a968e' };
+  const datasets = types.map(t => ({
+    label: t, data: months.map(m => monthData[m][t] || 0),
+    backgroundColor: typeColors[t] || C.waste, stack: 'stack1', borderRadius: 4,
+  }));
+  makeChart('chart-waste-trend', {
+    type: 'bar',
+    data: { labels: months.map(monthLabel), datasets },
+    options: {
+      ...chartOpts({ yLabel: 'kg' }),
+      scales: {
+        x: { stacked: true, ...chartOpts().scales.x },
+        y: { stacked: true, ...chartOpts().scales.y, title: { display: true, text: 'kg' } }
+      }
+    }
+  });
+
+  renderWasteTable(data);
+  document.getElementById('waste-record-count').textContent = data.length;
+}
+
+function renderWasteTable(data) {
+  const t = document.getElementById('table-waste');
+  const top = [...data].sort((a,b) => b.fecha - a.fecha).slice(0, 200);
+  const badge = tipo => {
+    const m = { 'PELIGROSO': 'red', 'RECICLABLE': 'green', 'NO APROVECHABLE': 'yellow', 'OTROS': 'neutral' };
+    return `<span class="badge ${m[tipo]||'neutral'}">${tipo}</span>`;
+  };
+  t.innerHTML = `
+    <thead><tr>
+      <th>Fecha</th><th>Planta</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th>
+      <th class="num">Cantidad</th><th>Unidad</th>
+    </tr></thead>
+    <tbody>${top.map(r => `
+        <tr>
+          <td>${r.fecha.toLocaleDateString('es-BO')}</td>
+          <td>${r.planta}</td>
+          <td>${badge(r.tipo)}</td>
+          <td>${r.categoria}</td>
+          <td>${r.subcategoria}</td>
+          <td class="num" style="font-weight:700">${fmtFull(r.cantidad)}</td>
+          <td>${r.unidad}</td>
+        </tr>`).join('')}</tbody>`;
+}
+
+/* ============================================================
+   MÓDULO CARBONO
+   ============================================================ */
+function renderCarbon() {
+  const hasData = state.carbon.length > 0;
+  document.getElementById('carbon-dashboard').style.display = hasData ? 'block' : 'none';
+  document.getElementById('carbon-dashboard-empty').style.display = hasData ? 'none' : 'block';
+
+  buildFilters('carbon', 'carbon-filters', [
+    { field: 'planta', label: 'Planta', key: 'planta' },
+    { field: 'categoria', label: 'Categoría', key: 'categoria' },
+  ]);
+
+  if (!hasData) return;
+
+  const data = applyFilters('carbon');
+  const total = data.reduce((s,r) => s + r.tco2e, 0);
+  const srcTotals = {};
+  data.forEach(r => srcTotals[r.categoria] = (srcTotals[r.categoria]||0) + r.tco2e);
+  const topSrc = Object.entries(srcTotals).sort((a,b)=>b[1]-a[1])[0];
+  const months = [...new Set(data.map(r => yearMonth(r.fecha)))].length || 1;
+
+  document.getElementById('k-carbon-total').innerHTML = `${fmtFull(total)}<span class="kpi-unit">tnCO₂eq</span>`;
+  document.getElementById('k-carbon-top').textContent = topSrc ? topSrc[0] : '—';
+  document.getElementById('k-carbon-records').textContent = data.length;
+  document.getElementById('k-carbon-avg').innerHTML = `${fmt(total/months)}<span class="kpi-unit">tn/mes</span>`;
+
+  const COLORS = getChartColors();
+  const C = getC();
+  const bgSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+
+  makeChart('chart-carbon-source', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(srcTotals),
+      datasets: [{ data: Object.values(srcTotals), backgroundColor: COLORS, borderColor: bgSurface, borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, weight: '500' }, boxWidth: 8, boxHeight: 8 } },
+        tooltip: {
+          backgroundColor: '#0a1f16', padding: 12, cornerRadius: 8,
+          callbacks: { label: c => `${c.label}: ${fmtFull(c.parsed)} tnCO₂eq (${(c.parsed/total*100).toFixed(1)}%)` }
+        }
+      }
+    }
+  });
+
+  const plantTotals = {};
+  data.forEach(r => plantTotals[r.planta] = (plantTotals[r.planta]||0) + r.tco2e);
+  makeChart('chart-carbon-plant', {
+    type: 'bar',
+    data: {
+      labels: Object.keys(plantTotals),
+      datasets: [{ label: 'tnCO₂eq', data: Object.values(plantTotals), backgroundColor: C.carbon + 'dd', borderRadius: 6, borderSkipped: false }]
+    },
+    options: chartOpts({ yLabel: 'tnCO₂eq' })
+  });
+
+  const monthData = {};
+  const cats = [...new Set(data.map(r => r.categoria))];
+  data.forEach(r => {
+    const ym = yearMonth(r.fecha);
+    if (!monthData[ym]) monthData[ym] = {};
+    monthData[ym][r.categoria] = (monthData[ym][r.categoria] || 0) + r.tco2e;
+  });
+  const monthsArr = Object.keys(monthData).sort();
+  const datasets = cats.map((c, i) => ({
+    label: c, data: monthsArr.map(m => monthData[m][c] || 0),
+    borderColor: COLORS[i % COLORS.length],
+    backgroundColor: COLORS[i % COLORS.length] + '25',
+    borderWidth: 2.5, tension: .35, pointRadius: 4,
+    pointBackgroundColor: state.theme === 'dark' ? '#0c1510' : '#fff',
+    pointBorderWidth: 2, fill: false,
+  }));
+  makeChart('chart-carbon-trend', {
+    type: 'line',
+    data: { labels: monthsArr.map(monthLabel), datasets },
+    options: chartOpts({ yLabel: 'tnCO₂eq' })
+  });
+
+  renderCarbonTable(data);
+  document.getElementById('carbon-record-count').textContent = data.length;
+}
+
+function renderCarbonTable(data) {
+  const t = document.getElementById('table-carbon');
+  const top = [...data].sort((a,b) => b.tco2e - a.tco2e).slice(0, 200);
+  const c = getC();
+  t.innerHTML = `
+    <thead><tr>
+      <th>Fecha</th><th>Planta</th><th>Categoría</th><th>Subcategoría</th>
+      <th class="num">Cantidad</th><th>Unidad</th>
+      <th class="num">Factor</th><th class="num">tnCO₂eq</th>
+    </tr></thead>
+    <tbody>${top.map(r => `
+        <tr>
+          <td>${r.fecha.toLocaleDateString('es-BO')}</td>
+          <td>${r.planta}</td>
+          <td>${r.categoria}</td>
+          <td>${r.subcategoria}</td>
+          <td class="num">${fmtFull(r.cantidad)}</td>
+          <td>${r.unidad}</td>
+          <td class="num">${r.factor.toFixed(6)}</td>
+          <td class="num" style="color:${c.carbon};font-weight:700">${fmtFull(r.tco2e, 3)}</td>
+        </tr>`).join('')}</tbody>`;
+}
+
+/* ============================================================
+   HOME DASHBOARD
+   ============================================================ */
+function renderHome() {
+  updateHomeStats();
+
+  const COLORS = getChartColors();
+  const C = getC();
+  const bgSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+
+  // --- Gráfico doughnut: fuentes de emisión ---
+  // Restaurar canvas si fue reemplazado por emptyState
+  const impactWrap = document.querySelector('#view-home .grid-2-1 > .panel:last-child .chart-wrap');
+  if (impactWrap && !impactWrap.querySelector('canvas')) {
+    impactWrap.innerHTML = '<canvas id="chart-home-impact"></canvas>';
+  }
+  if (state.carbon.length > 0) {
+    const catTotals = {};
+    state.carbon.forEach(r => catTotals[r.categoria] = (catTotals[r.categoria]||0) + r.tco2e);
+    makeChart('chart-home-impact', {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(catTotals),
+        datasets: [{ data: Object.values(catTotals), backgroundColor: COLORS, borderColor: bgSurface, borderWidth: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 10.5, weight: '500' }, boxWidth: 8 } } }
+      }
+    });
+  } else if (impactWrap) {
+    destroyChart('chart-home-impact');
+    impactWrap.innerHTML = emptyState('Sin datos', 'Carga datos de emisiones');
+  }
+
+  // --- Gráfico comparativo: agua por planta ---
+  // Restaurar canvas si fue reemplazado por emptyState
+  const wpcWrap = document.querySelector('#view-home .grid-2 .panel:first-child .chart-wrap');
+  if (wpcWrap && !wpcWrap.querySelector('canvas')) {
+    wpcWrap.innerHTML = '<canvas id="chart-home-water-plant"></canvas>';
+  }
+  const wpc = document.getElementById('chart-home-water-plant');
+  if (state.water.length > 0 && wpc) {
+    const pt = {};
+    state.water.forEach(r => pt[r.sucursal] = (pt[r.sucursal]||0) + r.consumo);
+    makeChart('chart-home-water-plant', {
+      type: 'bar',
+      data: {
+        labels: Object.keys(pt),
+        datasets: [{ label:'m³', data: Object.values(pt),
+          backgroundColor: COLORS.map(c => c+'cc'), borderRadius:6, borderSkipped:false }]
+      },
+      options: { ...chartOpts({ yLabel:'m³' }),
+        plugins: { legend:{ display:false }, tooltip: chartOpts().plugins.tooltip } }
+    });
+  } else if (wpcWrap) {
+    destroyChart('chart-home-water-plant');
+    wpcWrap.innerHTML = emptyState('Sin datos hídricos','Carga datos de agua');
+  }
+
+  // --- Gráfico comparativo: residuos por tipo ---
+  const wtcWrap = document.querySelector('#view-home .grid-2 .panel:last-child .chart-wrap');
+  if (wtcWrap && !wtcWrap.querySelector('canvas')) {
+    wtcWrap.innerHTML = '<canvas id="chart-home-waste-type"></canvas>';
+  }
+  const wtc = document.getElementById('chart-home-waste-type');
+  if (state.waste.length > 0 && wtc) {
+    const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+    const typeColors = state.theme==='dark'
+      ? { 'PELIGROSO':'#f87171','RECICLABLE':'#34d399','NO APROVECHABLE':'#fbbf24','OTROS':'#8aaccc' }
+      : { 'PELIGROSO':'#dc2626','RECICLABLE':'#059669','NO APROVECHABLE':'#d97706','OTROS':'#7a93b0' };
+    const tt = {};
+    state.waste.forEach(r => tt[r.tipo] = (tt[r.tipo]||0) + toKg(r));
+    makeChart('chart-home-waste-type', {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(tt),
+        datasets: [{
+          data: Object.values(tt),
+          backgroundColor: Object.keys(tt).map(k => typeColors[k]||C.waste),
+          borderColor: bgSurface, borderWidth:3
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false, cutout:'60%',
+        plugins:{ legend:{ position:'bottom', labels:{ font:{size:10.5,weight:'500'}, boxWidth:8 } } }
+      }
+    });
+  } else if (wtcWrap) {
+    destroyChart('chart-home-waste-type');
+    wtcWrap.innerHTML = emptyState('Sin datos de residuos','Carga datos de residuos');
+  }
+
+  renderHomeTrend();
+  renderAlerts();
+}
+
+function updateHomeStats() {
+  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+
+  const waterTotal   = state.water.reduce((s,r) => s+r.consumo, 0);
+  const wasteTotal   = state.waste.reduce((s,r) => s+toKg(r), 0);
+  const carbonTotal  = state.carbon.reduce((s,r) => s+r.tco2e, 0);
+  const recyclable   = state.waste.filter(r => r.tipo==='RECICLABLE').reduce((s,r) => s+toKg(r), 0);
+  const recycleRate  = wasteTotal>0 ? (recyclable/wasteTotal)*100 : 0;
+  const plants = new Set([
+    ...state.water.map(r=>r.sucursal),
+    ...state.waste.map(r=>r.planta),
+    ...state.carbon.map(r=>r.planta),
+  ]);
+
+  // Helper para animar KPI cards
+  const setKpiCard = (valueId, deltaId, barId, value, unit, delta, barPct, deltaClass) => {
+    const valEl = document.getElementById(valueId);
+    const delEl = document.getElementById(deltaId);
+    const barEl = document.getElementById(barId);
+    if (valEl) valEl.innerHTML = value > 0 ? `<em>${fmt(value)}</em>` : '—';
+    if (delEl) { delEl.textContent = delta; delEl.className = `hkc-delta${deltaClass ? ' '+deltaClass : ''}`; }
+    if (barEl) setTimeout(() => { barEl.style.width = Math.min(barPct, 100) + '%'; }, 100);
+  };
+
+  setKpiCard('hs-carbon','hd-carbon','hbar-carbon', carbonTotal,'tnCO₂eq',
+    state.carbon.length ? `${state.carbon.length} registros` : 'Sin registros',
+    carbonTotal>0 ? 75 : 0, '');
+
+  setKpiCard('hs-water','hd-water','hbar-water', waterTotal,'m³',
+    state.water.length ? `${state.water.length} lecturas` : 'Sin registros',
+    waterTotal>0 ? 60 : 0, '');
+
+  setKpiCard('hs-waste','hd-waste','hbar-waste', wasteTotal,'kg',
+    state.waste.length ? `${state.waste.length} registros` : 'Sin registros',
+    wasteTotal>0 ? 80 : 0, '');
+
+  // Reciclaje con color semafórico
+  const recycleEl = document.getElementById('hs-recycle');
+  const recycleDeltaEl = document.getElementById('hd-recycle');
+  const recycleBarEl = document.getElementById('hbar-recycle');
+  if (recycleEl) recycleEl.innerHTML = wasteTotal>0 ? `<em>${recycleRate.toFixed(1)}%</em>` : '—';
+  if (recycleDeltaEl) {
+    recycleDeltaEl.textContent = wasteTotal>0
+      ? (recycleRate>=30 ? '✓ Objetivo cumplido' : '↓ Bajo benchmark 30%')
+      : 'Sin registros';
+    recycleDeltaEl.className = `hkc-delta${wasteTotal>0 ? (recycleRate>=30?' good':' warn') : ''}`;
+  }
+  if (recycleBarEl) setTimeout(() => { recycleBarEl.style.width = Math.min(recycleRate, 100) + '%'; }, 100);
+
+  // Footer de la card de reciclaje: plantas
+  const plantsEl = document.getElementById('hs-plants');
+  const plantsDeltaEl = document.getElementById('hd-plants');
+  if (plantsEl) plantsEl.textContent = plants.size || '—';
+  if (plantsDeltaEl) plantsDeltaEl.textContent = plants.size ? `planta${plants.size>1?'s':''} activa${plants.size>1?'s':''}` : 'plantas';
+
+  // Pills en pillars (si quedan en el DOM por otro uso)
+  ['pill-carbon','pill-water','pill-waste'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `${[state.carbon.length, state.water.length, state.waste.length][i]} registros`;
+  });
+
+  // Meta chips
+  const allDates = [
+    ...state.water.map(r=>r.fecha),
+    ...state.waste.map(r=>r.fecha),
+    ...state.carbon.map(r=>r.fecha),
+  ].filter(Boolean).sort((a,b)=>a-b);
+  if (allDates.length) {
+    const min = allDates[0], max = allDates[allDates.length-1];
+    const metaPeriod = document.getElementById('meta-period');
+    const metaUpd = document.getElementById('meta-updated');
+    if (metaPeriod) metaPeriod.textContent = `${min.toLocaleDateString('es-BO')} — ${max.toLocaleDateString('es-BO')}`;
+    if (metaUpd) metaUpd.textContent = `Actualizado: ${new Date().toLocaleString('es-BO', {dateStyle:'short',timeStyle:'short'})}`;
+  } else {
+    const metaPeriod = document.getElementById('meta-period');
+    const metaUpd = document.getElementById('meta-updated');
+    if (metaPeriod) metaPeriod.textContent = 'Sin período de datos';
+    if (metaUpd) metaUpd.textContent = 'Sin datos';
+  }
+}
+
+function renderHomeTrend() {
+  const allMonths = new Set();
+  state.water.forEach(r => allMonths.add(yearMonth(r.fecha)));
+  state.carbon.forEach(r => allMonths.add(yearMonth(r.fecha)));
+  state.waste.forEach(r => allMonths.add(yearMonth(r.fecha)));
+  const months = [...allMonths].filter(Boolean).sort();
+
+  const wrap = document.querySelector('#view-home .grid-2-1 > .panel:first-child .chart-wrap');
+
+  if (months.length === 0) {
+    destroyChart('chart-home-trend');
+    if (wrap) wrap.innerHTML = emptyState('Sin datos cargados', 'Carga datos en los módulos para ver la tendencia');
+    return;
+  }
+
+  if (wrap && !wrap.querySelector('canvas')) wrap.innerHTML = '<canvas id="chart-home-trend"></canvas>';
+
+  const C = getC();
+  const waterByM = {}, carbonByM = {}, wasteByM = {};
+  state.water.forEach(r => { const m = yearMonth(r.fecha); waterByM[m] = (waterByM[m]||0) + r.consumo; });
+  state.carbon.forEach(r => { const m = yearMonth(r.fecha); carbonByM[m] = (carbonByM[m]||0) + r.tco2e; });
+  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+  state.waste.forEach(r => { const m = yearMonth(r.fecha); wasteByM[m] = (wasteByM[m]||0) + toKg(r); });
+
+  const pointBg = state.theme === 'dark' ? '#0c1510' : '#fff';
+  const style = getComputedStyle(document.documentElement);
+  const grid = style.getPropertyValue('--chart-grid').trim();
+  const axis = style.getPropertyValue('--chart-axis').trim();
+
+  makeChart('chart-home-trend', {
+    type: 'line',
+    data: {
+      labels: months.map(monthLabel),
+      datasets: [
+        { label: 'Agua (m³)', data: months.map(m => waterByM[m]||0), borderColor: C.water, backgroundColor: C.water + '20', yAxisID: 'y', tension: .35, borderWidth: 2.5, fill: true, pointRadius: 4, pointBackgroundColor: pointBg, pointBorderWidth: 2, hidden: Object.keys(waterByM).length === 0 },
+        { label: 'Residuos (kg)', data: months.map(m => wasteByM[m]||0), borderColor: C.waste, backgroundColor: C.waste + '20', yAxisID: 'y', tension: .35, borderWidth: 2.5, fill: false, pointRadius: 4, pointBackgroundColor: pointBg, pointBorderWidth: 2, hidden: Object.keys(wasteByM).length === 0 },
+        { label: 'tnCO₂eq', data: months.map(m => carbonByM[m]||0), borderColor: C.green, backgroundColor: C.green + '20', yAxisID: 'y1', tension: .35, borderWidth: 2.5, fill: false, pointRadius: 4, pointBackgroundColor: pointBg, pointBorderWidth: 2, hidden: Object.keys(carbonByM).length === 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11, weight: '500' }, boxWidth: 8, color: axis } },
+        tooltip: { backgroundColor: '#0a1f16', titleColor: '#fff', bodyColor: '#fff', padding: 12, cornerRadius: 8 }
+      },
+      scales: {
+        x: { grid: { color: grid }, ticks: { color: axis } },
+        y: { position: 'left', grid: { color: grid }, title: { display: true, text: 'Agua/Residuos', color: axis }, ticks: { color: axis } },
+        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'tnCO₂eq', color: axis }, ticks: { color: axis } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   ALERTAS IA
+   ============================================================ */
+function renderAlerts() {
+  const container = document.getElementById('home-alerts');
+  const alerts = [];
+
+  if (state.water.length > 0) {
+    const byM = {};
+    state.water.forEach(r => { const m = yearMonth(r.fecha); byM[m] = (byM[m]||0) + r.consumo; });
+    const months = Object.keys(byM).sort();
+    if (months.length >= 2) {
+      const last = byM[months[months.length-1]], prev = byM[months[months.length-2]];
+      if (prev > 0 && last / prev > 1.3) {
+        alerts.push({
+          type: 'warning',
+          title: 'Incremento en consumo de agua',
+          text: `${monthLabel(months[months.length-1])} registra un +${((last/prev-1)*100).toFixed(0)}% respecto al mes anterior (${fmt(last)} m³ vs ${fmt(prev)} m³). Revisar posibles fugas o procesos intensivos.`
+        });
+      }
+    }
+    const meters = {};
+    state.water.forEach(r => meters[r.medidor] = (meters[r.medidor]||0) + r.consumo);
+    const sorted = Object.entries(meters).sort((a,b)=>b[1]-a[1]);
+    const totalW = sorted.reduce((s,e)=>s+e[1],0);
+    if (sorted.length && sorted[0][1]/totalW > 0.5) {
+      alerts.push({
+        type: 'info',
+        title: 'Punto caliente identificado',
+        text: `El medidor "${sorted[0][0]}" concentra el ${(sorted[0][1]/totalW*100).toFixed(0)}% del consumo total (${fmt(sorted[0][1])} m³). Priorizar auditoría de eficiencia.`
+      });
+    }
+  }
+
+  if (state.waste.length > 0) {
+    const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+    const total = state.waste.reduce((s,r)=>s+toKg(r),0);
+    const recyclable = state.waste.filter(r => r.tipo === 'RECICLABLE').reduce((s,r)=>s+toKg(r),0);
+    const rate = total > 0 ? (recyclable/total)*100 : 0;
+    if (rate < 20 && total > 0) {
+      alerts.push({
+        type: 'danger',
+        title: 'Tasa de reciclaje baja',
+        text: `Solo el ${rate.toFixed(1)}% de los residuos se valorizan. Recomendación: establecer objetivos alineados con economía circular (meta ≥30%).`
+      });
+    } else if (rate >= 50) {
+      alerts.push({
+        type: 'success',
+        title: 'Excelente desempeño circular',
+        text: `${rate.toFixed(1)}% de los residuos se aprovechan. Desempeño superior al promedio del sector industrial.`
+      });
+    }
+    const hazard = state.waste.filter(r => r.tipo === 'PELIGROSO').reduce((s,r)=>s+toKg(r),0);
+    if (total > 0 && hazard/total > 0.6) {
+      alerts.push({
+        type: 'warning',
+        title: 'Alta proporción de residuos peligrosos',
+        text: `${(hazard/total*100).toFixed(0)}% del total son peligrosos. Revisar protocolos de disposición y trazabilidad documental.`
+      });
+    }
+  }
+
+  if (state.carbon.length > 0) {
+    const byCat = {};
+    state.carbon.forEach(r => byCat[r.categoria] = (byCat[r.categoria]||0) + r.tco2e);
+    const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+    const total = sorted.reduce((s,e)=>s+e[1],0);
+    if (sorted.length && sorted[0][1]/total > 0.5) {
+      alerts.push({
+        type: 'info',
+        title: 'Fuente dominante de emisiones',
+        text: `"${sorted[0][0]}" representa el ${(sorted[0][1]/total*100).toFixed(0)}% de la huella total (${fmt(sorted[0][1])} tnCO₂eq). Priorizar plan de descarbonización en esta línea.`
+      });
+    }
+  }
+
+  if (alerts.length === 0) {
+    container.innerHTML = '<div class="ai-empty">Sin insights disponibles. Carga datos para iniciar el análisis automático.</div>';
+    return;
+  }
+
+  container.innerHTML = alerts.map(a => `
+    <div class="ai-insight ${a.type}">
+      <div class="ai-insight-dot"></div>
+      <div class="ai-insight-body">
+        <div class="ai-insight-title">${a.title}</div>
+        <div class="ai-insight-text">${a.text}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function emptyState(title, sub) {
+  return `<div class="empty">
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+    </div>
+    <div class="empty-title">${title}</div>
+    <div class="empty-sub">${sub}</div>
+  </div>`;
+}
+
+/* ============================================================
+   FACTORES
+   ============================================================ */
+function renderFactors() {
+  const t = document.getElementById('table-factors');
+  const entries = Object.entries(state.factors);
+  t.innerHTML = `
+    <thead><tr>
+      <th>Subcategoría / Fuente</th>
+      <th class="num">Factor (tnCO₂eq/unidad)</th>
+      <th>Base de datos</th>
+      <th style="width:80px"></th>
+    </tr></thead>
+    <tbody>${entries.map(([k,v], i) => `
+      <tr>
+        <td><input class="seg-select factor-name" data-i="${i}" value="${k}" style="width:100%;background:var(--bg-warm)"></td>
+        <td class="num"><input type="number" step="0.0001" class="seg-select factor-val" data-i="${i}" value="${v}" style="width:130px;text-align:right;background:var(--bg-warm)"></td>
+        <td><span class="badge neutral">MITECO / Ref. BO</span></td>
+        <td><button class="btn btn-danger" data-del="${i}" style="padding:5px 10px;font-size:11px">Eliminar</button></td>
+      </tr>
+    `).join('')}</tbody>`;
+  t.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', e => {
+    const i = parseInt(e.currentTarget.dataset.del);
+    const keys = Object.keys(state.factors);
+    delete state.factors[keys[i]];
+    renderFactors();
+  }));
+}
+
+document.getElementById('btn-add-factor').addEventListener('click', () => {
+  const name = prompt('Nombre de la subcategoría:');
+  if (!name) return;
+  state.factors[norm(name)] = 0;
+  renderFactors();
+});
+
+document.getElementById('btn-save-factors').addEventListener('click', () => {
+  const t = document.getElementById('table-factors');
+  const names = [...t.querySelectorAll('.factor-name')].map(i => i.value);
+  const vals = [...t.querySelectorAll('.factor-val')].map(i => parseFloat(i.value) || 0);
+  state.factors = {};
+  names.forEach((n,i) => { if (n.trim()) state.factors[norm(n)] = vals[i]; });
+  state.carbon.forEach(r => {
+    const newFactor = state.factors[norm(r.subcategoria)];
+    if (newFactor !== undefined) { r.factor = newFactor; r.tco2e = r.cantidad * newFactor; }
+  });
+  toast('Factores actualizados', 'Emisiones recalculadas');
+  renderFactors();
+  if (state.carbon.length > 0) renderCarbon();
+  updateHomeStats();
+});
+
+document.getElementById('btn-goto-factors').addEventListener('click', () => switchView('factors'));
+
+/* ============================================================
+   DATOS
+   ============================================================ */
+function renderDataSummary() {
+  const c = document.getElementById('data-summary');
+  const C = getC();
+
+  const counts = {
+    water:  { real: state.water.filter(r=>!r._demo).length,  demo: state.water.filter(r=>r._demo).length  },
+    waste:  { real: state.waste.filter(r=>!r._demo).length,  demo: state.waste.filter(r=>r._demo).length  },
+    carbon: { real: state.carbon.filter(r=>!r._demo).length, demo: state.carbon.filter(r=>r._demo).length },
+  };
+
+  const hayDemo  = counts.water.demo + counts.waste.demo + counts.carbon.demo > 0;
+  const hayReales= counts.water.real + counts.waste.real + counts.carbon.real > 0;
+
+  const mkRow = (label, color, rc, dc) => `
+    <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:16px;
+                padding:14px 16px;border-bottom:1px solid var(--border);">
+      <div style="font-weight:600;color:var(--ink);font-size:13.5px">${label}</div>
+      <div style="text-align:right">
+        <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${color}">${rc}</div>
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Registros reales</div>
+      </div>
+      <div style="text-align:right;min-width:90px">
+        <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--warning)">${dc}</div>
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Registros demo</div>
+      </div>
+    </div>`;
+
+  c.innerHTML = `
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:16px;padding:10px 16px;
+                  background:var(--bg-warm);border-bottom:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted)">Módulo</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);text-align:right">Reales</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--warning);text-align:right;min-width:90px">Demo</div>
+      </div>
+      ${mkRow('💧 Huella Hídrica',  C.water,  counts.water.real,  counts.water.demo)}
+      ${mkRow('🗑️ Gestión Residuos', C.waste,  counts.waste.real,  counts.waste.demo)}
+      ${mkRow('☁️ Huella Carbono',   C.carbon, counts.carbon.real, counts.carbon.demo)}
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:16px;padding:12px 16px;
+                  background:var(--bg-warm);">
+        <div style="font-weight:700;color:var(--ink)">Total</div>
+        <div style="text-align:right;font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--green-600)">
+          ${counts.water.real + counts.waste.real + counts.carbon.real}
+        </div>
+        <div style="text-align:right;font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--warning);min-width:90px">
+          ${counts.water.demo + counts.waste.demo + counts.carbon.demo}
+        </div>
+      </div>
+    </div>
+
+    ${!hayReales && !hayDemo ? `
+      <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
+        No hay datos cargados. Carga un archivo Excel o usa los datos demo.
+      </div>` : ''}
+
+    ${hayDemo ? `
+      <div style="padding:12px 16px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);
+                  border-radius:var(--r-sm);display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--warning);font-weight:500">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/>
+        </svg>
+        Tienes datos demo activos. Usa <b style="margin:0 4px">"Quitar solo demo"</b> para eliminarlos sin afectar tus datos reales.
+      </div>` : ''}
+
+    ${hayReales && !hayDemo ? `
+      <div style="padding:12px 16px;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.25);
+                  border-radius:var(--r-sm);display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--success);font-weight:500">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Solo tienes datos reales. Sin datos demo activos.
+      </div>` : ''}`;
+}
+
+document.getElementById('btn-clear-demo')?.addEventListener('click', () => {
+  const demoW = state.water.filter(r=>r._demo).length;
+  const demoWr = state.waste.filter(r=>r._demo).length;
+  const demoC = state.carbon.filter(r=>r._demo).length;
+  const total = demoW + demoWr + demoC;
+
+  if (total === 0) {
+    toast('Sin datos demo', 'No hay datos demo que eliminar', 'warning');
+    return;
+  }
+
+  if (!confirm(`¿Quitar solo los ${total} registros demo?\n\nTus datos reales quedarán intactos.`)) return;
+
+  state.water  = state.water.filter(r => !r._demo);
+  state.waste  = state.waste.filter(r => !r._demo);
+  state.carbon = state.carbon.filter(r => !r._demo);
+
+  toast('Demo eliminado', `${total} registros demo quitados · tus datos reales están intactos`);
+  updateNavCounts();
+  updateHomeStats();
+  renderDataSummary();
+  renderHome();
+  if (state.currentView === 'water')  renderWater();
+  if (state.currentView === 'waste')  renderWaste();
+  if (state.currentView === 'carbon') renderCarbon();
+  refreshDropdownsAll();
+});
+
+document.getElementById('btn-clear-data').addEventListener('click', () => {
+  const hayDemo  = state.water.some(r=>r._demo) || state.waste.some(r=>r._demo) || state.carbon.some(r=>r._demo);
+  const hayReales= state.water.some(r=>!r._demo) || state.waste.some(r=>!r._demo) || state.carbon.some(r=>!r._demo);
+
+  let msg = '¿Eliminar TODOS los datos cargados?\n\n';
+  if (hayReales && hayDemo) msg += '⚠️ Esto borrará tanto tus datos reales como los demo.\nUsa "Quitar solo demo" si quieres conservar tus datos reales.';
+  else if (hayReales) msg += 'Esto borrará todos tus datos reales.';
+  else msg += 'Esto borrará los datos demo.';
+
+  if (!confirm(msg)) return;
+
+  state.water = []; state.waste = []; state.carbon = [];
+  Object.values(state.charts).forEach(ch => ch.destroy());
+  state.charts = {};
+  toast('Datos eliminados', 'Todos los registros fueron limpiados');
+  updateNavCounts();
+  updateHomeStats();
+  renderDataSummary();
+  renderHome();
+  if (state.currentView === 'water')  renderWater();
+  if (state.currentView === 'waste')  renderWaste();
+  if (state.currentView === 'carbon') renderCarbon();
+  refreshDropdownsAll();
+});
+
+function updateNavCounts() {
+  document.getElementById('nav-water-count').textContent = state.water.length || '';
+  document.getElementById('nav-waste-count').textContent = state.waste.length || '';
+  document.getElementById('nav-carbon-count').textContent = state.carbon.length || '';
+}
+
+/* ============================================================
+   EXPORTS
+   ============================================================ */
+document.getElementById('btn-export-pdf').addEventListener('click', async () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+
+  doc.setFillColor(10, 31, 22);
+  doc.rect(0, 0, 210, 40, 'F');
+  doc.setFillColor(212, 245, 66);
+  doc.circle(190, 20, 15, 'F');
+  doc.setTextColor(212, 245, 66);
+  doc.setFontSize(24); doc.setFont('helvetica','bold');
+  doc.text('EcoTrack', 14, 20);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.setTextColor(200, 200, 200);
+  doc.text('Plataforma de Gestión Ambiental', 14, 27);
+  doc.text(`Informe: ${new Date().toLocaleString('es-BO')}`, 14, 33);
+
+  let y = 52;
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('Resumen Ejecutivo', 14, y); y += 2;
+  doc.setDrawColor(30, 83, 64); doc.setLineWidth(1);
+  doc.line(14, y+2, 40, y+2);
+  y += 8;
+
+  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+  const waterTotal = state.water.reduce((s,r)=>s+r.consumo,0);
+  const wasteTotal = state.waste.reduce((s,r)=>s+toKg(r),0);
+  const recyclable = state.waste.filter(r => r.tipo === 'RECICLABLE').reduce((s,r)=>s+toKg(r),0);
+  const recycleRate = wasteTotal > 0 ? (recyclable/wasteTotal)*100 : 0;
+  const carbonTotal = state.carbon.reduce((s,r)=>s+r.tco2e,0);
+
+  doc.autoTable({
+    startY: y, theme: 'plain',
+    head: [['Indicador', 'Valor', 'Unidad']],
+    body: [
+      ['Huella de carbono',     fmtFull(carbonTotal), 'tnCO₂eq'],
+      ['Consumo total de agua', fmtFull(waterTotal), 'm³'],
+      ['Residuos generados',    fmtFull(wasteTotal), 'kg'],
+      ['Tasa de reciclaje',     recycleRate.toFixed(2), '%'],
+      ['Registros totales',     (state.water.length + state.waste.length + state.carbon.length).toString(), 'registros'],
+    ],
+    headStyles: { fillColor: [10, 31, 22], textColor: [212, 245, 66], fontSize: 10 },
+    bodyStyles: { fontSize: 10 },
+    alternateRowStyles: { fillColor: [245, 244, 238] }
+  });
+  y = doc.lastAutoTable.finalY + 12;
+
+  const addChart = (chartId, title) => {
+    if (!state.charts[chartId]) return;
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(10, 31, 22);
+    doc.text(title, 14, y); y += 4;
+    const img = state.charts[chartId].toBase64Image('image/png', 1);
+    doc.addImage(img, 'PNG', 14, y, 180, 80);
+    y += 86;
+  };
+  addChart('chart-home-trend', 'Tendencia Consolidada');
+  addChart('chart-home-impact', 'Composición de Emisiones');
+
+  if (state.water.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.setTextColor(10, 31, 22);
+    doc.text('Huella Hídrica', 14, y); y += 5;
+    const plantTotals = {};
+    state.water.forEach(r => plantTotals[r.sucursal] = (plantTotals[r.sucursal]||0) + r.consumo);
+    doc.autoTable({
+      startY: y, theme: 'striped',
+      head: [['Planta', 'Consumo (m³)', '% del total']],
+      body: Object.entries(plantTotals).map(([p,v]) => [p, fmtFull(v), (v/waterTotal*100).toFixed(1)+'%']),
+      headStyles: { fillColor: [59, 130, 196], textColor: 255 },
+      styles: { fontSize: 9 }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (state.waste.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.setTextColor(10, 31, 22);
+    doc.text('Gestión de Residuos', 14, y); y += 5;
+    const catTotals = {};
+    state.waste.forEach(r => catTotals[r.categoria] = (catTotals[r.categoria]||0) + toKg(r));
+    doc.autoTable({
+      startY: y, theme: 'striped',
+      head: [['Categoría', 'Cantidad (kg)', '% del total']],
+      body: Object.entries(catTotals).map(([c,v]) => [c, fmtFull(v), (v/wasteTotal*100).toFixed(1)+'%']),
+      headStyles: { fillColor: [199, 122, 42], textColor: 255 },
+      styles: { fontSize: 9 }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (state.carbon.length > 0) {
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.setTextColor(10, 31, 22);
+    doc.text('Huella de Carbono', 14, y); y += 5;
+    const srcTotals = {};
+    state.carbon.forEach(r => srcTotals[r.categoria] = (srcTotals[r.categoria]||0) + r.tco2e);
+    doc.autoTable({
+      startY: y, theme: 'striped',
+      head: [['Fuente', 'tnCO₂eq', '% del total']],
+      body: Object.entries(srcTotals).sort((a,b)=>b[1]-a[1])
+        .map(([c,v]) => [c, fmtFull(v,3), (v/carbonTotal*100).toFixed(1)+'%']),
+      headStyles: { fillColor: [30, 83, 64], textColor: [212, 245, 66] },
+      styles: { fontSize: 9 }
+    });
+  }
+
+  const pages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8); doc.setTextColor(140);
+    doc.text(`EcoTrack · Informe auditable · Página ${i} de ${pages}`, 105, 290, { align: 'center' });
+  }
+
+  doc.save(`EcoTrack_Informe_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('Informe PDF generado', 'Listo para revisión');
+});
+
+document.getElementById('btn-export-xlsx').addEventListener('click', () => {
+  const wb = XLSX.utils.book_new();
+  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+  const waterTotal = state.water.reduce((s,r)=>s+r.consumo,0);
+  const wasteTotal = state.waste.reduce((s,r)=>s+toKg(r),0);
+  const carbonTotal = state.carbon.reduce((s,r)=>s+r.tco2e,0);
+
+  const resumen = [
+    ['EcoTrack · Informe Ambiental'],
+    ['Generado:', new Date().toLocaleString('es-BO')],
+    [], ['Indicador', 'Valor', 'Unidad'],
+    ['Huella de carbono', carbonTotal, 'tnCO₂eq'],
+    ['Consumo de agua', waterTotal, 'm³'],
+    ['Residuos', wasteTotal, 'kg'],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), 'Resumen');
+  if (state.water.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.water.map(r => ({
+      Fecha: r.fecha.toLocaleDateString('es-BO'), Sucursal: r.sucursal, Medidor: r.medidor,
+      Lectura_Anterior: r.lectura_ant, Lectura_Actual: r.lectura_act, Consumo_m3: r.consumo, Unidad: r.unidad
+    }))), 'Huella_Hidrica');
+  }
+  if (state.waste.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.waste.map(r => ({
+      Fecha: r.fecha.toLocaleDateString('es-BO'), Planta: r.planta, Tipo: r.tipo,
+      Categoria: r.categoria, Subcategoria: r.subcategoria,
+      Cantidad: r.cantidad, Unidad: r.unidad, Kg_Equivalente: toKg(r)
+    }))), 'Residuos');
+  }
+  if (state.carbon.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.carbon.map(r => ({
+      Fecha: r.fecha.toLocaleDateString('es-BO'), Planta: r.planta, Categoria: r.categoria,
+      Subcategoria: r.subcategoria, Cantidad: r.cantidad, Unidad: r.unidad,
+      Factor_Emision: r.factor, tnCO2eq: r.tco2e
+    }))), 'Huella_Carbono');
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+    Object.entries(state.factors).map(([k,v]) => ({ Subcategoria: k, Factor_tnCO2eq: v }))
+  ), 'Factores_Emision');
+
+  XLSX.writeFile(wb, `EcoTrack_Datos_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Excel generado', 'Datos exportados');
+});
+
+/* ============================================================
+   DEMO
+   ============================================================ */
+function loadDemoData() {
+  // Si ya hay datos reales, preguntar cómo proceder
+  const hayReales = state.water.some(r => !r._demo) ||
+                    state.waste.some(r => !r._demo) ||
+                    state.carbon.some(r => !r._demo);
+  if (hayReales) {
+    const resp = confirm(
+      '⚠️ Ya tienes datos reales cargados.\n\n' +
+      '• Aceptar → Agregar demo JUNTO a tus datos reales (puedes quitar el demo después)\n' +
+      '• Cancelar → No hacer nada'
+    );
+    if (!resp) return;
+  }
+
+  // Quitar demos anteriores antes de cargar nuevos (evitar duplicados)
+  state.water  = state.water.filter(r => !r._demo);
+  state.waste  = state.waste.filter(r => !r._demo);
+  state.carbon = state.carbon.filter(r => !r._demo);
+
+  const plants = ['PLANTA BATERIAS', 'PLANTA EX ECOVOLTA', 'PLANTA PYC'];
+  const meters = {
+    'PLANTA BATERIAS': ['Máquina Lavadora Cargado', 'Administración', 'Frente a Snack', 'Portería Batebol', 'Pozo 1', 'Pozo 2'],
+    'PLANTA EX ECOVOLTA': ['Portería Ecovolta'],
+    'PLANTA PYC': ['Portería PyC']
+  };
+  const waterDemo = [];
+  const start = new Date(2025, 0, 1);
+  for (let i = 0; i < 90; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    for (const p of plants) {
+      for (const m of meters[p]) {
+        const base = m.includes('Máquina') ? 15 : m.includes('Pozo') ? 8 : 2;
+        const consumo = Math.max(0, base + (Math.random() - 0.3) * base * 0.8);
+        if (Math.random() > 0.2) {
+          const c = parseFloat(consumo.toFixed(2));
+          waterDemo.push({
+            fecha: new Date(d), sucursal: p, medidor: m,
+            consumo: c, lectura_ant: 0, lectura_act: c,
+            unidad: 'm3', _consumo_excel: c, _lant_excel: null,
+            _demo: true,   // ← marca de origen demo
+          });
+        }
+      }
+    }
+  }
+  calcularTrazabilidadAgua(waterDemo);
+  state.water = [...state.water, ...waterDemo];
+
+  const wasteDemo = [];
+  const wasteCats = [
+    { planta: 'PLANTA BATERÍAS', cat: 'Residuo Peligroso',  sub: 'ACEITE NEGRO',       unidad: 'lt', tipo: 'PELIGROSO',  base: 800   },
+    { planta: 'PLANTA BATERÍAS', cat: 'Residuo Peligroso',  sub: 'Baterías en desuso', unidad: 'KG', tipo: 'PELIGROSO',  base: 25000 },
+    { planta: 'PLANTA BATERÍAS', cat: 'Residuo Peligroso',  sub: 'Escoria',             unidad: 'KG', tipo: 'PELIGROSO',  base: 3000  },
+    { planta: 'PLANTA BATERÍAS', cat: 'Residuo reciclable', sub: 'Cartón',              unidad: 'KG', tipo: 'RECICLABLE', base: 450   },
+    { planta: 'PLANTA BATERÍAS', cat: 'Residuo reciclable', sub: 'Plástico',            unidad: 'KG', tipo: 'RECICLABLE', base: 280   },
+    { planta: 'PLANTA PYC',      cat: 'Residuo reciclable', sub: 'Bobinas',             unidad: 'KG', tipo: 'RECICLABLE', base: 180   },
+    { planta: 'PLANTA PYC',      cat: 'Residuo reciclable', sub: 'Pallet',              unidad: 'KG', tipo: 'RECICLABLE', base: 320   },
+    { planta: 'PLANTA PYC',      cat: 'Residuo reciclable', sub: 'PET',                 unidad: 'KG', tipo: 'RECICLABLE', base: 150   },
+  ];
+  for (let month = 0; month < 12; month++) {
+    for (const w of wasteCats) {
+      const factor = 0.7 + Math.random() * 0.6;
+      wasteDemo.push({
+        fecha: new Date(2025, month, 1), planta: w.planta,
+        categoria: w.cat, subcategoria: w.sub,
+        cantidad: parseFloat((w.base * factor).toFixed(1)),
+        unidad: w.unidad, tipo: w.tipo,
+        _demo: true,   // ← marca de origen demo
+      });
+    }
+  }
+  state.waste = [...state.waste, ...wasteDemo];
+
+  const carbonDemo = wasteDemo.map(r => {
+    const factor = state.factors[norm(r.subcategoria)] ?? DEFAULT_FACTORS[norm(r.subcategoria)] ?? 0.002;
+    return {
+      fecha: r.fecha, planta: r.planta, categoria: r.categoria, subcategoria: r.subcategoria,
+      cantidad: r.cantidad, unidad: r.unidad, factor, tco2e: r.cantidad * factor,
+      _demo: true,   // ← marca de origen demo
+    };
+  });
+  for (let month = 0; month < 12; month++) {
+    const fE = state.factors['ELECTRICIDAD'] ?? 0.000395;
+    const cE = 80000 + Math.random() * 20000;
+    carbonDemo.push({
+      fecha: new Date(2025, month, 1), planta: 'PLANTA BATERÍAS',
+      categoria: 'Consumo energético', subcategoria: 'Eléctricidad',
+      cantidad: parseFloat(cE.toFixed(0)), unidad: 'kWh', factor: fE, tco2e: cE * fE,
+      _demo: true,
+    });
+    const fG = state.factors['GAS NATURAL'] ?? 0.002985;
+    const cG = 4000 + Math.random() * 2000;
+    carbonDemo.push({
+      fecha: new Date(2025, month, 1), planta: 'PLANTA BATERÍAS',
+      categoria: 'Consumo de gas', subcategoria: 'Gas natural',
+      cantidad: parseFloat(cG.toFixed(0)), unidad: 'm3', factor: fG, tco2e: cG * fG,
+      _demo: true,
+    });
+    const fD = state.factors['DIESEL'] ?? 0.002549;
+    const cD = 1500 + Math.random() * 500;
+    carbonDemo.push({
+      fecha: new Date(2025, month, 1), planta: 'PLANTA PYC',
+      categoria: 'Combustible', subcategoria: 'Diesel',
+      cantidad: parseFloat(cD.toFixed(0)), unidad: 'lt', factor: fD, tco2e: cD * fD,
+      _demo: true,
+    });
+  }
+  state.carbon = [...state.carbon, ...carbonDemo];
+
+  const total = waterDemo.length + wasteDemo.length + carbonDemo.length;
+  toast('Datos demo cargados', `${total} registros de ejemplo añadidos`);
+  updateNavCounts();
+  updateHomeStats();
+  renderHome();
+  renderWater();
+  renderWaste();
+  renderCarbon();
+  refreshDropdownsAll();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  // Cargar tema guardado
+  try {
+    const saved = localStorage.getItem('ecotrack-theme');
+    if (saved) state.theme = saved;
+  } catch(e) {}
+  setTheme(state.theme);
+
+  state.factors = { ...DEFAULT_FACTORS };
+  setupUpload('upload-water', 'file-water', parseWater);
+  setupUpload('upload-waste', 'file-waste', parseWaste);
+  setupUpload('upload-carbon', 'file-carbon', parseCarbon);
+  document.getElementById('btn-load-demo').addEventListener('click', loadDemoData);
+
+  // Clicks en KPI cards del home
+  document.querySelectorAll('.home-kpi-card[data-goto]').forEach(card => {
+    card.addEventListener('click', () => switchView(card.dataset.goto));
+  });
+
+  renderHome();
+  renderFactors();
+  updateNavCounts();
+
+  // Inicializar formularios manuales (incluye refreshDropdownsAll)
+  initFormWater();
+  initFormWaste();
+  initFormCarbon();
+}
+/* ============================================================
+   FORMULARIOS DE INGRESO MANUAL
+   ============================================================ */
+
+/* ── Helpers de formulario ── */
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function showFeedback(id, msg, type='success') {
+  const el = document.getElementById(id);
+  const msgEl = document.getElementById(id + '-msg');
+  if (!el) return;
+  if (msgEl) msgEl.textContent = msg;
+  el.className = `form-feedback show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function markError(inputId) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  el.classList.add('error');
+  el.addEventListener('input', () => el.classList.remove('error'), { once: true });
+}
+
+function toggleForm(wrapId) {
+  document.getElementById(wrapId).classList.toggle('open');
+}
+
+/* actualizar datalists con los valores ya cargados en state */
+function refreshDatalist(listId, values) {
+  const dl = document.getElementById(listId);
+  if (!dl) return;
+  dl.innerHTML = [...new Set(values)].filter(Boolean)
+    .map(v => `<option value="${v}"></option>`).join('');
+}
+
+function refreshAllDataLists() {
+  // Mantener compatibilidad con datalists que puedan existir
+  refreshDatalist('fw-list-plantas',   state.water.map(r => r.sucursal));
+  refreshDatalist('fw-list-medidores', state.water.map(r => r.medidor));
+  refreshDatalist('fwr-list-plantas',  state.waste.map(r => r.planta));
+  refreshDatalist('fwr-list-subs',     state.waste.map(r => r.subcategoria));
+  refreshDatalist('fc-list-plantas',   state.carbon.map(r => r.planta));
+  // También actualizar los nuevos selects dinámicos
+  refreshDropdownsAll();
+}
+
+/**
+ * Catálogo de tipos de consumo por fuente → { subcategoria, unidad_defecto }
+ */
+const CARBON_TIPO_CATALOG = {
+  'Consumo energético': [
+    { sub:'Eléctricidad',    unidad:'kWh' },
+  ],
+  'Combustible': [
+    { sub:'Diesel',          unidad:'lt'  },
+    { sub:'Gasolina',        unidad:'lt'  },
+    { sub:'GLP',             unidad:'lt'  },
+    { sub:'Carbón',          unidad:'KG'  },
+  ],
+  'Consumo de gas': [
+    { sub:'Gas natural',     unidad:'m3'  },
+    { sub:'Gas licuado',     unidad:'lt'  },
+  ],
+  'Residuo Peligroso': [
+    { sub:'ACEITE NEGRO',    unidad:'lt'  },
+    { sub:'Baterías en desuso', unidad:'KG' },
+    { sub:'Escoria',         unidad:'KG'  },
+    { sub:'EMPETROLADOS',    unidad:'KG'  },
+    { sub:'RAEE',            unidad:'KG'  },
+  ],
+  'Residuo reciclable': [
+    { sub:'Cartón',          unidad:'KG'  },
+    { sub:'Plástico',        unidad:'KG'  },
+    { sub:'PET',             unidad:'KG'  },
+    { sub:'Bobinas',         unidad:'KG'  },
+    { sub:'Pallet',          unidad:'KG'  },
+  ],
+  'Transporte': [
+    { sub:'Diesel transporte', unidad:'lt' },
+    { sub:'Gasolina transporte', unidad:'lt' },
+  ],
+  'Otros': [
+    { sub:'Otros',           unidad:'KG'  },
+  ],
+};
+
+/** Rellena un <select> con opciones y opción "+ Nuevo" al final */
+function fillSelect(selectId, options, currentValue = '') {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const prev = currentValue || sel.value;
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+    options.map(v => `<option value="${v}"${v===prev?' selected':''}>${v}</option>`).join('') +
+    '<option value="__nuevo__">+ Nuevo…</option>';
+  // Restaurar selección anterior si sigue siendo válida
+  if (prev && prev !== '__nuevo__' && options.includes(prev)) sel.value = prev;
+}
+
+/** Gestiona el campo "Nuevo" que aparece al elegir "+ Nuevo…" */
+function handleNuevoOption(selectId, nuevoInputId, cb) {
+  const sel  = document.getElementById(selectId);
+  const inp  = document.getElementById(nuevoInputId);
+  if (!sel || !inp) return;
+  sel.addEventListener('change', () => {
+    if (sel.value === '__nuevo__') {
+      inp.style.display = 'block';
+      inp.focus();
+    } else {
+      inp.style.display = 'none';
+      inp.value = '';
+      if (cb) cb(sel.value);
+    }
+  });
+  // Cuando el usuario escribe en el input de nuevo, actualiza el select al perder foco
+  inp.addEventListener('blur', () => {
+    const nuevo = inp.value.trim();
+    if (!nuevo) { sel.value = ''; inp.style.display = 'none'; return; }
+    // Agregar la nueva opción al select (antes de "+ Nuevo")
+    const opt = new Option(nuevo, nuevo, true, true);
+    sel.insertBefore(opt, sel.querySelector('option[value="__nuevo__"]'));
+    sel.value = nuevo;
+    inp.style.display = 'none';
+    if (cb) cb(nuevo);
+  });
+}
+
+/** Refresca todos los selects dinámicos */
+function refreshDropdownsAll() {
+  // --- AGUA: Sucursal y Medidor ---
+  const plantasAgua   = [...new Set(state.water.map(r => r.sucursal).filter(Boolean))].sort();
+  const medidoresAgua = [...new Set(state.water.map(r => r.medidor).filter(Boolean))].sort();
+  fillSelect('fw-planta',  plantasAgua);
+  fillSelect('fw-medidor', medidoresAgua);
+
+  // --- RESIDUOS: Sucursal y Subcategoría ---
+  const plantasResiduos = [...new Set([
+    ...state.waste.map(r => r.planta),
+    ...state.water.map(r => r.sucursal),
+    ...state.carbon.map(r => r.planta),
+  ].filter(Boolean))].sort();
+  fillSelect('fwr-planta', plantasResiduos);
+
+  const subResiduos = [...new Set(state.waste.map(r => r.subcategoria).filter(Boolean))].sort();
+  fillSelect('fwr-sub', subResiduos);
+
+  // --- CARBONO: Sucursal ---
+  const plantasCarbon = [...new Set([
+    ...state.water.map(r => r.sucursal),
+    ...state.waste.map(r => r.planta),
+    ...state.carbon.map(r => r.planta),
+  ].filter(Boolean))].sort();
+  fillSelect('fc-planta', plantasCarbon);
+}
+
+/* ── FORMULARIO AGUA ── */
+function initFormWater() {
+  const toggle = document.getElementById('form-water-toggle');
+  if (toggle) toggle.addEventListener('click', () => toggleForm('form-water-wrap'));
+
+  const fwFecha = document.getElementById('fw-fecha');
+  if (fwFecha) fwFecha.value = todayISO();
+
+  refreshDropdownsAll();
+
+  // Selects "Nuevo" para planta y medidor
+  handleNuevoOption('fw-planta', 'fw-planta-nuevo');
+  // No hay fw-planta-nuevo en agua, así que usamos solo el select
+  // Medidor: al cambiar planta, filtrar medidores; al cambiar medidor, autocompleta lectura anterior
+  const selPlanta  = document.getElementById('fw-planta');
+  const selMedidor = document.getElementById('fw-medidor');
+
+  if (selPlanta) {
+    selPlanta.addEventListener('change', () => {
+      if (selPlanta.value === '__nuevo__') {
+        const n = prompt('Nombre de la nueva planta:');
+        if (n) {
+          const opt = new Option(n, n, true, true);
+          selPlanta.insertBefore(opt, selPlanta.querySelector('option[value="__nuevo__"]'));
+          selPlanta.value = n;
+        } else { selPlanta.value = ''; }
+      }
+      // Filtrar medidores por planta
+      const planta = selPlanta.value;
+      const medidoresFiltrados = planta && planta !== '__nuevo__'
+        ? [...new Set(state.water.filter(r => r.sucursal===planta).map(r => r.medidor).filter(Boolean))].sort()
+        : [...new Set(state.water.map(r => r.medidor).filter(Boolean))].sort();
+      fillSelect('fw-medidor', medidoresFiltrados);
+      // Limpiar campos calculados
+      const lAntEl = document.getElementById('fw-lect-ant');
+      const consumoEl = document.getElementById('fw-consumo');
+      if (lAntEl) lAntEl.value = '';
+      if (consumoEl) consumoEl.value = '';
+    });
+  }
+
+  if (selMedidor) {
+    selMedidor.addEventListener('change', () => {
+      if (selMedidor.value === '__nuevo__') {
+        const n = prompt('Nombre del nuevo medidor:');
+        if (n) {
+          const opt = new Option(n, n, true, true);
+          selMedidor.insertBefore(opt, selMedidor.querySelector('option[value="__nuevo__"]'));
+          selMedidor.value = n;
+        } else { selMedidor.value = ''; return; }
+      }
+      // Autocompleta lectura anterior
+      const planta  = selPlanta?.value;
+      const medidor = selMedidor.value;
+      if (!medidor || medidor === '__nuevo__') return;
+      const ultReg = [...state.water]
+        .filter(r => r.medidor === medidor && (!planta || r.sucursal === planta))
+        .sort((a,b) => b.fecha - a.fecha)[0];
+      const lAntEl = document.getElementById('fw-lect-ant');
+      if (lAntEl) lAntEl.value = ultReg ? ultReg.lectura_act : '';
+      // Limpiar consumo calculado
+      const consumoEl = document.getElementById('fw-consumo');
+      if (consumoEl) consumoEl.value = '';
+      // Ocultar alerta
+      const alertEl = document.getElementById('fw-alert-lectura');
+      if (alertEl) alertEl.style.display = 'none';
+    });
+  }
+
+  // Calcular consumo en tiempo real al ingresar lectura actual
+  const lActEl = document.getElementById('fw-lect-act');
+  if (lActEl) {
+    lActEl.addEventListener('input', () => {
+      const lAnt  = parseFloat(document.getElementById('fw-lect-ant')?.value) || 0;
+      const lAct  = parseFloat(lActEl.value);
+      const alertEl = document.getElementById('fw-alert-lectura');
+      const consumoEl = document.getElementById('fw-consumo');
+      if (isNaN(lAct)) { if (consumoEl) consumoEl.value = ''; return; }
+      if (lAct < lAnt) {
+        if (alertEl) alertEl.style.display = 'block';
+        if (consumoEl) consumoEl.value = '';
+      } else {
+        if (alertEl) alertEl.style.display = 'none';
+        if (consumoEl) consumoEl.value = (lAct - lAnt).toFixed(2);
+      }
+    });
+  }
+
+  // Limpiar
+  document.getElementById('btn-clear-water-form')?.addEventListener('click', () => {
+    ['fw-lect-ant','fw-lect-act','fw-consumo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ''; el.classList.remove('error'); }
+    });
+    if (selPlanta)  selPlanta.value  = '';
+    if (selMedidor) selMedidor.value = '';
+    document.getElementById('fw-fecha').value = todayISO();
+    const alertEl = document.getElementById('fw-alert-lectura');
+    if (alertEl) alertEl.style.display = 'none';
+  });
+
+  // Guardar
+  document.getElementById('btn-save-water')?.addEventListener('click', () => {
+    const fecha   = document.getElementById('fw-fecha')?.value;
+    let   planta  = selPlanta?.value?.trim();
+    let   medidor = selMedidor?.value?.trim();
+    const lAnt    = parseFloat(document.getElementById('fw-lect-ant')?.value) || 0;
+    const lAct    = parseFloat(document.getElementById('fw-lect-act')?.value);
+    const consumoRaw = parseFloat(document.getElementById('fw-consumo')?.value);
+
+    // Si eligieron __nuevo__, usar el input
+    if (planta === '__nuevo__') planta = document.getElementById('fw-planta-nuevo')?.value.trim()||'';
+    if (medidor === '__nuevo__') medidor = prompt('Nombre del nuevo medidor:')||'';
+
+    let valid = true;
+    if (!fecha)   { markError('fw-fecha');   valid = false; }
+    if (!planta)  { markError('fw-planta');  valid = false; }
+    if (!medidor) { markError('fw-medidor'); valid = false; }
+    if (isNaN(lAct))              { markError('fw-lect-act'); valid = false; }
+    if (lAct < lAnt)              {
+      document.getElementById('fw-alert-lectura').style.display = 'block';
+      valid = false;
+    }
+    if (!valid) {
+      showFeedback('feedback-water','Revisa los campos obligatorios (*)','error');
+      return;
+    }
+
+    const consumo = isNaN(consumoRaw) ? Math.max(0, lAct - lAnt) : consumoRaw;
+    const registro = {
+      fecha: new Date(fecha + 'T12:00:00'),
+      sucursal: planta, medidor,
+      consumo, lectura_ant: lAnt, lectura_act: lAct,
+      unidad: 'm3',
+      _consumo_excel: consumo,  // ya calculado, no recalcular
+      _lant_excel: lAnt,
+      _manual: true,
+    };
+    state.water.push(registro);
+
+    const badge = document.getElementById('badge-water-manual');
+    if (badge) badge.textContent = state.water.filter(r => r._manual).length;
+
+    showFeedback('feedback-water', `✓ Registro guardado: ${consumo.toFixed(2)} m³ en ${medidor}`);
+
+    ['fw-lect-ant','fw-lect-act','fw-consumo'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    if (selPlanta)  selPlanta.value  = '';
+    if (selMedidor) selMedidor.value = '';
+    document.getElementById('fw-fecha').value = todayISO();
+    const alertEl = document.getElementById('fw-alert-lectura');
+    if (alertEl) alertEl.style.display = 'none';
+
+    updateNavCounts();
+    updateHomeStats();
+    refreshAllDataLists();
+    if (state.currentView === 'water') renderWater();
+    if (state.currentView === 'home')  renderHome();
+  });
+}
+
+/* ── FORMULARIO RESIDUOS ── */
+function initFormWaste() {
+  const toggle = document.getElementById('form-waste-toggle');
+  if (toggle) toggle.addEventListener('click', () => toggleForm('form-waste-wrap'));
+
+  const fwrFecha = document.getElementById('fwr-fecha');
+  if (fwrFecha) fwrFecha.value = todayISO();
+
+  refreshDropdownsAll();
+
+  // Planta con opción Nuevo
+  const selPlanta = document.getElementById('fwr-planta');
+  if (selPlanta) {
+    selPlanta.addEventListener('change', () => {
+      if (selPlanta.value === '__nuevo__') {
+        const inp = document.getElementById('fwr-planta-nuevo');
+        if (inp) inp.style.display = 'block';
+      } else {
+        const inp = document.getElementById('fwr-planta-nuevo');
+        if (inp) { inp.style.display = 'none'; inp.value = ''; }
+      }
+    });
+  }
+  const inpPlantaNuevo = document.getElementById('fwr-planta-nuevo');
+  if (inpPlantaNuevo) {
+    inpPlantaNuevo.addEventListener('blur', () => {
+      const nuevo = inpPlantaNuevo.value.trim();
+      if (!nuevo) { if(selPlanta) selPlanta.value = ''; inpPlantaNuevo.style.display = 'none'; return; }
+      if (selPlanta) {
+        const opt = new Option(nuevo, nuevo, true, true);
+        selPlanta.insertBefore(opt, selPlanta.querySelector('option[value="__nuevo__"]'));
+        selPlanta.value = nuevo;
+      }
+      inpPlantaNuevo.style.display = 'none';
+    });
+  }
+
+  // Subcategoría con opción Nuevo
+  const selSub = document.getElementById('fwr-sub');
+  if (selSub) {
+    selSub.addEventListener('change', () => {
+      if (selSub.value === '__nuevo__') {
+        const inp = document.getElementById('fwr-sub-nuevo');
+        if (inp) inp.style.display = 'block';
+      } else {
+        const inp = document.getElementById('fwr-sub-nuevo');
+        if (inp) { inp.style.display = 'none'; inp.value = ''; }
+      }
+    });
+  }
+  const inpSubNuevo = document.getElementById('fwr-sub-nuevo');
+  if (inpSubNuevo) {
+    inpSubNuevo.addEventListener('blur', () => {
+      const nuevo = inpSubNuevo.value.trim();
+      if (!nuevo) { if(selSub) selSub.value = ''; inpSubNuevo.style.display = 'none'; return; }
+      if (selSub) {
+        const opt = new Option(nuevo, nuevo, true, true);
+        selSub.insertBefore(opt, selSub.querySelector('option[value="__nuevo__"]'));
+        selSub.value = nuevo;
+      }
+      inpSubNuevo.style.display = 'none';
+    });
+  }
+
+  // Limpiar
+  document.getElementById('btn-clear-waste-form')?.addEventListener('click', () => {
+    ['fwr-cantidad','fwr-reciclada'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.value = ''; el.classList.remove('error'); }
+    });
+    if (selPlanta) selPlanta.value = '';
+    if (selSub) selSub.value = '';
+    const tipoEl = document.getElementById('fwr-tipo');
+    if (tipoEl) tipoEl.value = '';
+    const unidadEl = document.getElementById('fwr-unidad');
+    if (unidadEl) unidadEl.value = 'KG';
+    document.getElementById('fwr-fecha').value = todayISO();
+    ['fwr-planta-nuevo','fwr-sub-nuevo'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.style.display = 'none'; el.value = ''; }
+    });
+  });
+
+  // Guardar
+  document.getElementById('btn-save-waste')?.addEventListener('click', () => {
+    const fecha    = document.getElementById('fwr-fecha')?.value;
+    let   planta   = selPlanta?.value?.trim();
+    const tipo     = document.getElementById('fwr-tipo')?.value;
+    let   sub      = selSub?.value?.trim();
+    const cantidad = parseFloat(document.getElementById('fwr-cantidad')?.value);
+    const unidad   = document.getElementById('fwr-unidad')?.value || 'KG';
+    const reciclada= parseFloat(document.getElementById('fwr-reciclada')?.value) || 0;
+
+    // Resolver "Nuevo"
+    if (planta === '__nuevo__') planta = document.getElementById('fwr-planta-nuevo')?.value.trim()||'';
+    if (sub    === '__nuevo__') sub    = document.getElementById('fwr-sub-nuevo')?.value.trim()||'';
+
+    let valid = true;
+    if (!fecha)                         { markError('fwr-fecha');    valid = false; }
+    if (!planta)                        { markError('fwr-planta');   valid = false; }
+    if (!tipo)                          { markError('fwr-tipo');     valid = false; }
+    if (!sub)                           { markError('fwr-sub');      valid = false; }
+    if (isNaN(cantidad) || cantidad < 0){ markError('fwr-cantidad'); valid = false; }
+    if (!valid) { showFeedback('feedback-waste','Revisa los campos obligatorios (*)','error'); return; }
+
+    const catMap = { 'PELIGROSO':'Residuo Peligroso','RECICLABLE':'Residuo reciclable',
+                     'NO APROVECHABLE':'Residuo no aprovechable','OTROS':'Otros' };
+    const registro = {
+      fecha: new Date(fecha+'T12:00:00'), planta,
+      categoria: catMap[tipo]||tipo, subcategoria: sub,
+      cantidad, unidad, tipo, _reciclada: reciclada, _manual: true,
+    };
+    state.waste.push(registro);
+
+    const badge = document.getElementById('badge-waste-manual');
+    if (badge) badge.textContent = state.waste.filter(r => r._manual).length;
+
+    showFeedback('feedback-waste', `✓ Guardado: ${cantidad} ${unidad} de ${sub}`);
+
+    ['fwr-cantidad','fwr-reciclada'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    if (selPlanta) selPlanta.value = '';
+    if (selSub)    selSub.value    = '';
+    const tipoEl = document.getElementById('fwr-tipo');
+    if (tipoEl) tipoEl.value = '';
+    document.getElementById('fwr-fecha').value = todayISO();
+    ['fwr-planta-nuevo','fwr-sub-nuevo'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.style.display = 'none'; el.value = ''; }
+    });
+
+    updateNavCounts();
+    updateHomeStats();
+    refreshAllDataLists();
+    if (state.currentView === 'waste') renderWaste();
+    if (state.currentView === 'home')  renderHome();
+  });
+}
+
+/* ── FORMULARIO CARBONO ── */
+function initFormCarbon() {
+  const toggle = document.getElementById('form-carbon-toggle');
+  if (toggle) toggle.addEventListener('click', () => toggleForm('form-carbon-wrap'));
+
+  const fcFecha = document.getElementById('fc-fecha');
+  if (fcFecha) fcFecha.value = todayISO();
+
+  refreshDropdownsAll();
+
+  // Planta con opción Nuevo
+  const selPlanta = document.getElementById('fc-planta');
+  if (selPlanta) {
+    selPlanta.addEventListener('change', () => {
+      if (selPlanta.value === '__nuevo__') {
+        const inp = document.getElementById('fc-planta-nuevo');
+        if (inp) inp.style.display = 'block';
+      } else {
+        const inp = document.getElementById('fc-planta-nuevo');
+        if (inp) { inp.style.display = 'none'; inp.value = ''; }
+      }
+    });
+  }
+  const inpPlantaNuevo = document.getElementById('fc-planta-nuevo');
+  if (inpPlantaNuevo) {
+    inpPlantaNuevo.addEventListener('blur', () => {
+      const nuevo = inpPlantaNuevo.value.trim();
+      if (!nuevo) { if(selPlanta) selPlanta.value=''; inpPlantaNuevo.style.display='none'; return; }
+      if (selPlanta) {
+        const opt = new Option(nuevo, nuevo, true, true);
+        selPlanta.insertBefore(opt, selPlanta.querySelector('option[value="__nuevo__"]'));
+        selPlanta.value = nuevo;
+      }
+      inpPlantaNuevo.style.display = 'none';
+    });
+  }
+
+  // Fuente → carga Tipo de Consumo dinámicamente
+  const selFuente = document.getElementById('fc-fuente');
+  const selTipo   = document.getElementById('fc-tipo');
+  const selUnidad = document.getElementById('fc-unidad');
+
+  if (selFuente) {
+    selFuente.addEventListener('change', () => {
+      const fuente = selFuente.value;
+      // Tipos desde catálogo
+      const catalogTipos = (CARBON_TIPO_CATALOG[fuente] || []).map(t => t.sub);
+      // Tipos desde datos cargados de esa categoría/fuente
+      const dataTipos = [...new Set(
+        state.carbon.filter(r => r.categoria === fuente).map(r => r.subcategoria).filter(Boolean)
+      )];
+      const allTipos = [...new Set([...catalogTipos, ...dataTipos])].sort();
+
+      if (selTipo) {
+        selTipo.innerHTML = '<option value="">— Seleccionar —</option>' +
+          allTipos.map(v => `<option value="${v}">${v}</option>`).join('') +
+          '<option value="__nuevo__">+ Nuevo…</option>';
+      }
+
+      // Reset preview
+      const pv = document.getElementById('fc-preview-tco2e');
+      const pf = document.getElementById('fc-preview-factor');
+      if (pv) pv.textContent = '—';
+      if (pf) pf.textContent = '—';
+    });
+  }
+
+  // Tipo → autocompleta unidad y actualiza preview
+  if (selTipo) {
+    selTipo.addEventListener('change', () => {
+      const fuente = selFuente?.value;
+      const tipo   = selTipo.value;
+      if (tipo === '__nuevo__') {
+        const inp = document.getElementById('fc-tipo-nuevo');
+        if (inp) inp.style.display = 'block';
+        return;
+      } else {
+        const inp = document.getElementById('fc-tipo-nuevo');
+        if (inp) { inp.style.display = 'none'; inp.value = ''; }
+      }
+      // Autocompletar unidad
+      const entry = (CARBON_TIPO_CATALOG[fuente]||[]).find(t => t.sub === tipo);
+      if (entry && selUnidad) selUnidad.value = entry.unidad;
+      updateCarbonPreview();
+    });
+  }
+
+  const inpTipoNuevo = document.getElementById('fc-tipo-nuevo');
+  if (inpTipoNuevo) {
+    inpTipoNuevo.addEventListener('blur', () => {
+      const nuevo = inpTipoNuevo.value.trim();
+      if (!nuevo) { if(selTipo) selTipo.value=''; inpTipoNuevo.style.display='none'; return; }
+      if (selTipo) {
+        const opt = new Option(nuevo, nuevo, true, true);
+        selTipo.insertBefore(opt, selTipo.querySelector('option[value="__nuevo__"]'));
+        selTipo.value = nuevo;
+      }
+      inpTipoNuevo.style.display = 'none';
+      updateCarbonPreview();
+    });
+  }
+
+  // Preview en tiempo real
+  function updateCarbonPreview() {
+    const tipoVal = selTipo?.value;
+    const cantidad = parseFloat(document.getElementById('fc-cantidad')?.value);
+    const pv = document.getElementById('fc-preview-tco2e');
+    const pf = document.getElementById('fc-preview-factor');
+    if (!tipoVal || tipoVal==='__nuevo__' || isNaN(cantidad) || cantidad<=0) {
+      if (pv) pv.textContent = '—';
+      if (pf) pf.textContent = '—';
+      return;
+    }
+    const subN  = norm(tipoVal);
+    const factor = state.factors[subN] ?? DEFAULT_FACTORS[subN] ?? 0;
+    const tco2e  = cantidad * factor;
+    if (pv) pv.textContent = tco2e>0 ? fmtFull(tco2e,4)+' tnCO₂eq' : '0 (sin factor configurado)';
+    if (pf) pf.textContent = factor>0 ? factor.toFixed(6) : 'No configurado';
+  }
+  document.getElementById('fc-cantidad')?.addEventListener('input', updateCarbonPreview);
+
+  // Limpiar
+  document.getElementById('btn-clear-carbon-form')?.addEventListener('click', () => {
+    document.getElementById('fc-fecha').value = todayISO();
+    if (selPlanta) selPlanta.value = '';
+    if (selFuente) { selFuente.value = ''; }
+    if (selTipo)   { selTipo.innerHTML = '<option value="">— Seleccionar fuente primero —</option>'; }
+    const cantEl = document.getElementById('fc-cantidad'); if (cantEl) cantEl.value = '';
+    if (selUnidad) selUnidad.value = 'kWh';
+    const pv = document.getElementById('fc-preview-tco2e'); if (pv) pv.textContent = '—';
+    const pf = document.getElementById('fc-preview-factor'); if (pf) pf.textContent = '—';
+    ['fc-planta-nuevo','fc-tipo-nuevo'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.style.display='none'; el.value=''; }
+    });
+  });
+
+  // Guardar
+  document.getElementById('btn-save-carbon')?.addEventListener('click', () => {
+    const fecha    = document.getElementById('fc-fecha')?.value;
+    let   planta   = selPlanta?.value?.trim();
+    const fuente   = selFuente?.value;
+    let   tipo     = selTipo?.value?.trim();
+    const cantidad = parseFloat(document.getElementById('fc-cantidad')?.value);
+    const unidad   = selUnidad?.value || 'kWh';
+
+    // Resolver "Nuevo"
+    if (planta === '__nuevo__') planta = document.getElementById('fc-planta-nuevo')?.value.trim()||'';
+    if (tipo   === '__nuevo__') tipo   = document.getElementById('fc-tipo-nuevo')?.value.trim()||'';
+
+    let valid = true;
+    if (!fecha)                          { markError('fc-fecha');    valid=false; }
+    if (!planta)                         { markError('fc-planta');   valid=false; }
+    if (!fuente)                         { markError('fc-fuente');   valid=false; }
+    if (!tipo)                           { markError('fc-tipo');     valid=false; }
+    if (isNaN(cantidad)||cantidad<=0)    { markError('fc-cantidad'); valid=false; }
+    if (!valid) { showFeedback('feedback-carbon','Revisa los campos obligatorios (*)','error'); return; }
+
+    const subN   = norm(tipo);
+    const factor = state.factors[subN] ?? DEFAULT_FACTORS[subN] ?? 0;
+    const tco2e  = cantidad * factor;
+
+    const registro = {
+      fecha: new Date(fecha+'T12:00:00'), planta,
+      categoria: fuente, subcategoria: tipo,
+      cantidad, unidad, factor, tco2e, _manual: true,
+    };
+    state.carbon.push(registro);
+
+    const badge = document.getElementById('badge-carbon-manual');
+    if (badge) badge.textContent = state.carbon.filter(r => r._manual).length;
+
+    showFeedback('feedback-carbon',`✓ Guardado: ${fmtFull(tco2e,4)} tnCO₂eq · ${cantidad} ${unidad} de ${tipo}`);
+
+    document.getElementById('fc-fecha').value = todayISO();
+    if (selPlanta) selPlanta.value = '';
+    if (selFuente) selFuente.value = '';
+    if (selTipo)   { selTipo.innerHTML = '<option value="">— Seleccionar fuente primero —</option>'; }
+    const cantEl = document.getElementById('fc-cantidad'); if (cantEl) cantEl.value = '';
+    if (selUnidad) selUnidad.value = 'kWh';
+    const pv = document.getElementById('fc-preview-tco2e'); if (pv) pv.textContent = '—';
+    const pf = document.getElementById('fc-preview-factor'); if (pf) pf.textContent = '—';
+    ['fc-planta-nuevo','fc-tipo-nuevo'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.style.display='none'; el.value=''; }
+    });
+
+    updateNavCounts();
+    updateHomeStats();
+    refreshAllDataLists();
+    if (state.currentView === 'carbon') renderCarbon();
+    if (state.currentView === 'home')   renderHome();
+  });
+}
+
+/* ── Badges manuales al renderizar módulos ── */
+function updateManualBadges() {
+  const bw  = document.getElementById('badge-water-manual');
+  const bwr = document.getElementById('badge-waste-manual');
+  const bc  = document.getElementById('badge-carbon-manual');
+  if (bw)  bw.textContent  = state.water.filter(r => r._manual).length;
+  if (bwr) bwr.textContent = state.waste.filter(r => r._manual).length;
+  if (bc)  bc.textContent  = state.carbon.filter(r => r._manual).length;
+}
+
+init();
+</script>
+</body>
+</html>
