@@ -1413,6 +1413,52 @@ input, select { font-family: inherit; color: inherit; }
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   SUBTABS
+   ============================================================ */
+.subtab-bar{display:flex;gap:4px;background:var(--bg-warm);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:20px;width:fit-content;}
+.subtab-btn{padding:7px 18px;border:none;background:transparent;border-radius:calc(var(--r) - 3px);font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .2s;font-family:var(--font);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+.subtab-btn svg{width:13px;height:13px;}
+.subtab-btn.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);}
+.subtab-panel{display:none;}
+.subtab-panel.active{display:block;}
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);width:92%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);transform:translateY(20px);transition:transform .25s;padding:0;}
+.modal-overlay.open .modal-box{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;gap:12px;padding:18px 22px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;}
+.modal-header-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;}
+.modal-header-icon svg{width:18px;height:18px;}
+.modal-header-icon.water{background:var(--water-soft);color:var(--water);}
+.modal-header-icon.waste{background:var(--waste-soft);color:var(--waste);}
+.modal-header-icon.carbon{background:var(--carbon-soft);color:var(--carbon);}
+.modal-header-icon.pdf{background:var(--green-100);color:var(--green-600);}
+.modal-title{flex:1;}
+.modal-title h3{font-size:15px;font-weight:700;color:var(--ink);margin:0;}
+.modal-title p{font-size:11.5px;color:var(--text-muted);margin:2px 0 0;}
+.modal-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;display:grid;place-items:center;font-size:16px;transition:all .15s;}
+.modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
+.modal-body{padding:20px 22px 24px;}
+/* ============================================================
+   BOTÓN REGISTRAR
+   ============================================================ */
+.btn-register{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:var(--green-600);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font);box-shadow:0 2px 8px rgba(37,99,168,.25);}
+.btn-register:hover{background:var(--green-700);transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,99,168,.35);}
+.btn-register svg{width:14px;height:14px;}
+/* ============================================================
+   PDF FILTER MODAL
+   ============================================================ */
+.pdf-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;}
+.pdf-opt{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;cursor:pointer;transition:all .15s;background:var(--surface-2);}
+.pdf-opt:hover{border-color:var(--green-600);}
+.pdf-opt.sel{border-color:var(--green-600);background:var(--green-50);}
+.pdf-opt label{font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;display:block;}
+.pdf-opt input[type=date],.pdf-opt input[type=month],.pdf-opt select{margin-top:6px;width:100%;padding:5px 9px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font);}
+.pdf-sec-check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 0;}
 </style>
 </head>
 <body>
@@ -1652,10 +1698,27 @@ input, select { font-family: inherit; color: inherit; }
 
       <!-- ============= HUELLA HÍDRICA ============= -->
       <section class="view" id="view-water">
-        <!-- Segmentadores arriba -->
-        <div class="segments" id="water-filters"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+          <div class="subtab-bar">
+            <button class="subtab-btn active" id="water-tab-ind" onclick="switchSubtab('water','ind')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4"/></svg>
+              Indicadores
+            </button>
+            <button class="subtab-btn" id="water-tab-traza" onclick="switchSubtab('water','traza')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+              Trazabilidad y Datos
+            </button>
+          </div>
+          <button class="btn-register" onclick="openModal('modal-water')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar nuevos datos
+          </button>
+        </div>
 
-        <div id="water-dashboard-empty" style="display:block">
+        <!-- SUBTAB INDICADORES -->
+        <div class="subtab-panel active" id="water-panel-ind">
+          <div class="segments" id="water-filters"></div>
+          <div id="water-dashboard-empty" style="display:block">
           <div class="panel">
             <div class="empty">
               <div class="empty-icon">
@@ -1667,7 +1730,7 @@ input, select { font-family: inherit; color: inherit; }
           </div>
         </div>
 
-        <div id="water-dashboard" style="display:none">
+          <div id="water-dashboard" style="display:none">
           <div class="kpi-grid">
             <div class="kpi-card kpi-water">
               <div class="kpi-icon">
@@ -1720,9 +1783,35 @@ input, select { font-family: inherit; color: inherit; }
             <div class="table-wrap table-compact"><table class="table" id="table-water"></table></div>
           </div>
         </div>
+        </div>
 
-        <!-- Formulario ingreso manual AGUA -->
-        <div class="form-manual" id="form-water-wrap">
+        <!-- SUBTAB TRAZABILIDAD -->
+        <div class="subtab-panel" id="water-panel-traza">
+          <div id="water-traza-wrap" style="display:none">
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="water-record-count">0</span> registros</div></div></div>
+              <div class="table-wrap table-compact"><table class="table" id="table-water"></table></div>
+            </div>
+          </div>
+          <div class="upload-panel">
+          <div class="upload-panel-title">Ingesta de datos</div>
+          <label class="upload-zone" id="upload-water">
+            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-water">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+            <p>Formato: FECHA · SUCURSAL · MEDIDOR · LECTURA_ANTERIOR · LECTURA_ACTUAL · CONSUMO · UNIDAD</p>
+          </label>
+          <div class="howto">
+            <b>¿Cómo funciona?</b> Carga un archivo Excel (.xlsx) con los registros de consumo de agua. El sistema detecta automáticamente las columnas, calcula consumos totales por planta y medidor, e identifica puntos calientes.
+          </div>
+        </div>
+        </div>
+
+        <!-- Formulario oculto — fuente para el modal -->
+        <div id="form-water-src" style="display:none">
+          <div class="form-manual" id="form-water-wrap">
           <div class="form-manual-header" id="form-water-toggle">
             <div class="form-manual-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
@@ -1783,29 +1872,30 @@ input, select { font-family: inherit; color: inherit; }
             </div>
           </div>
         </div>
-
-        <!-- Upload al final -->
-        <div class="upload-panel">
-          <div class="upload-panel-title">Ingesta de datos</div>
-          <label class="upload-zone" id="upload-water">
-            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-water">
-            <div class="upload-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </div>
-            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
-            <p>Formato: FECHA · SUCURSAL · MEDIDOR · LECTURA_ANTERIOR · LECTURA_ACTUAL · CONSUMO · UNIDAD</p>
-          </label>
-          <div class="howto">
-            <b>¿Cómo funciona?</b> Carga un archivo Excel (.xlsx) con los registros de consumo de agua. El sistema detecta automáticamente las columnas, calcula consumos totales por planta y medidor, e identifica puntos calientes.
-          </div>
         </div>
       </section>
-
       <!-- ============= RESIDUOS ============= -->
       <section class="view" id="view-waste">
-        <div class="segments" id="waste-filters"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+          <div class="subtab-bar">
+            <button class="subtab-btn active" id="waste-tab-ind" onclick="switchSubtab('waste','ind')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4"/></svg>
+              Indicadores
+            </button>
+            <button class="subtab-btn" id="waste-tab-traza" onclick="switchSubtab('waste','traza')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+              Trazabilidad y Datos
+            </button>
+          </div>
+          <button class="btn-register" onclick="openModal('modal-waste')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar nuevos datos
+          </button>
+        </div>
 
-        <div id="waste-dashboard-empty" style="display:block">
+        <div class="subtab-panel active" id="waste-panel-ind">
+          <div class="segments" id="waste-filters"></div>
+          <div id="waste-dashboard-empty" style="display:block">
           <div class="panel">
             <div class="empty">
               <div class="empty-icon">
@@ -1817,7 +1907,9 @@ input, select { font-family: inherit; color: inherit; }
           </div>
         </div>
 
-        <div id="waste-dashboard" style="display:none">
+    
+
+          <div id="waste-dashboard" style="display:none">
           <div class="kpi-grid">
             <div class="kpi-card kpi-waste">
               <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg></div>
@@ -1862,9 +1954,33 @@ input, select { font-family: inherit; color: inherit; }
             <div class="table-wrap table-compact"><table class="table" id="table-waste"></table></div>
           </div>
         </div>
+        </div>
 
-        <!-- Formulario ingreso manual RESIDUOS -->
-        <div class="form-manual" id="form-waste-wrap">
+        <div class="subtab-panel" id="waste-panel-traza">
+          <div id="waste-traza-wrap" style="display:none">
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="waste-record-count">0</span> registros</div></div></div>
+              <div class="table-wrap table-compact"><table class="table" id="table-waste"></table></div>
+            </div>
+          </div>
+          <div class="upload-panel">
+          <div class="upload-panel-title">Ingesta de datos</div>
+          <label class="upload-zone" id="upload-waste">
+            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-waste">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+            <p>Formato: FECHA · PLANTA · CATEGORÍA PRINCIPAL · SUBCATEGORÍA · CANTIDAD · UNIDAD</p>
+          </label>
+          <div class="howto">
+            <b>¿Cómo funciona?</b> El sistema clasifica automáticamente los residuos en <b>Peligrosos</b>, <b>Reciclables</b> y <b>No aprovechables</b> según la categoría. Calcula tasas de reciclaje y detecta desviaciones respecto a benchmarks del sector industrial.
+          </div>
+        </div>
+        </div>
+
+        <div id="form-waste-src" style="display:none">
+          <div class="form-manual" id="form-waste-wrap">
           <div class="form-manual-header" id="form-waste-toggle">
             <div class="form-manual-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -1939,28 +2055,30 @@ input, select { font-family: inherit; color: inherit; }
             </div>
           </div>
         </div>
-
-        <div class="upload-panel">
-          <div class="upload-panel-title">Ingesta de datos</div>
-          <label class="upload-zone" id="upload-waste">
-            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-waste">
-            <div class="upload-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </div>
-            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
-            <p>Formato: FECHA · PLANTA · CATEGORÍA PRINCIPAL · SUBCATEGORÍA · CANTIDAD · UNIDAD</p>
-          </label>
-          <div class="howto">
-            <b>¿Cómo funciona?</b> El sistema clasifica automáticamente los residuos en <b>Peligrosos</b>, <b>Reciclables</b> y <b>No aprovechables</b> según la categoría. Calcula tasas de reciclaje y detecta desviaciones respecto a benchmarks del sector industrial.
-          </div>
         </div>
       </section>
-
       <!-- ============= HUELLA CARBONO ============= -->
       <section class="view" id="view-carbon">
-        <div class="segments" id="carbon-filters"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+          <div class="subtab-bar">
+            <button class="subtab-btn active" id="carbon-tab-ind" onclick="switchSubtab('carbon','ind')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4"/></svg>
+              Indicadores
+            </button>
+            <button class="subtab-btn" id="carbon-tab-traza" onclick="switchSubtab('carbon','traza')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+              Trazabilidad y Datos
+            </button>
+          </div>
+          <button class="btn-register" onclick="openModal('modal-carbon')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar nuevos datos
+          </button>
+        </div>
 
-        <div id="carbon-dashboard-empty" style="display:block">
+        <div class="subtab-panel active" id="carbon-panel-ind">
+          <div class="segments" id="carbon-filters"></div>
+          <div id="carbon-dashboard-empty" style="display:block">
           <div class="panel">
             <div class="empty">
               <div class="empty-icon">
@@ -1972,7 +2090,9 @@ input, select { font-family: inherit; color: inherit; }
           </div>
         </div>
 
-        <div id="carbon-dashboard" style="display:none">
+    
+
+          <div id="carbon-dashboard" style="display:none">
           <div class="kpi-grid">
             <div class="kpi-card kpi-carbon">
               <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg></div>
@@ -2017,9 +2137,33 @@ input, select { font-family: inherit; color: inherit; }
             <div class="table-wrap table-compact"><table class="table" id="table-carbon"></table></div>
           </div>
         </div>
+        </div>
 
-        <!-- Formulario ingreso manual CARBONO -->
-        <div class="form-manual" id="form-carbon-wrap">
+        <div class="subtab-panel" id="carbon-panel-traza">
+          <div id="carbon-traza-wrap" style="display:none">
+            <div class="panel">
+              <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="carbon-record-count">0</span> registros</div></div></div>
+              <div class="table-wrap table-compact"><table class="table" id="table-carbon"></table></div>
+            </div>
+          </div>
+          <div class="upload-panel">
+          <div class="upload-panel-title">Ingesta de datos</div>
+          <label class="upload-zone" id="upload-carbon">
+            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-carbon">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+            <p>Incluye consumos energéticos, combustibles y residuos — cálculo automático de tnCO₂eq</p>
+          </label>
+          <div class="howto">
+            <b>¿Cómo funciona?</b> La plataforma aplica automáticamente los <b>factores de emisión</b> configurados para convertir cada actividad (Electricidad, Gas natural, Diesel, Gasolina, residuos) en toneladas de CO₂ equivalente. Alineado con GHG Protocol e ISO 14064. <button class="btn" id="btn-goto-factors" style="margin-top:8px;padding:6px 12px;font-size:11px">Configurar factores →</button>
+          </div>
+        </div>
+        </div>
+
+        <div id="form-carbon-src" style="display:none">
+          <div class="form-manual" id="form-carbon-wrap">
           <div class="form-manual-header" id="form-carbon-toggle">
             <div class="form-manual-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
@@ -2101,23 +2245,8 @@ input, select { font-family: inherit; color: inherit; }
             </div>
           </div>
         </div>
-
-        <div class="upload-panel">
-          <div class="upload-panel-title">Ingesta de datos</div>
-          <label class="upload-zone" id="upload-carbon">
-            <input type="file" accept=".xlsx,.xls" style="display:none" id="file-carbon">
-            <div class="upload-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </div>
-            <h3>Arrastra tu archivo aquí o haz clic para seleccionar</h3>
-            <p>Incluye consumos energéticos, combustibles y residuos — cálculo automático de tnCO₂eq</p>
-          </label>
-          <div class="howto">
-            <b>¿Cómo funciona?</b> La plataforma aplica automáticamente los <b>factores de emisión</b> configurados para convertir cada actividad (Electricidad, Gas natural, Diesel, Gasolina, residuos) en toneladas de CO₂ equivalente. Alineado con GHG Protocol e ISO 14064. <button class="btn" id="btn-goto-factors" style="margin-top:8px;padding:6px 12px;font-size:11px">Configurar factores →</button>
-          </div>
         </div>
       </section>
-
       <!-- ============= FACTORES ============= -->
       <section class="view" id="view-factors">
         <div class="panel">
@@ -2167,6 +2296,74 @@ input, select { font-family: inherit; color: inherit; }
       </section>
     </div>
   </main>
+</div>
+
+
+<!-- MODAL AGUA -->
+<div class="modal-overlay" id="modal-water">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-icon water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg></div>
+      <div class="modal-title"><h3>Registrar lectura de agua <span class="manual-badge" id="badge-water-modal">0</span></h3><p>Registro rápido · supervisores · personal operativo</p></div>
+      <button class="modal-close" onclick="closeModal('modal-water')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-water-body"></div>
+  </div>
+</div>
+<!-- MODAL RESIDUOS -->
+<div class="modal-overlay" id="modal-waste">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-icon waste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg></div>
+      <div class="modal-title"><h3>Registrar residuo <span class="manual-badge" id="badge-waste-modal">0</span></h3><p>Registro rápido · supervisores · personal operativo</p></div>
+      <button class="modal-close" onclick="closeModal('modal-waste')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-waste-body"></div>
+  </div>
+</div>
+<!-- MODAL CARBONO -->
+<div class="modal-overlay" id="modal-carbon">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-icon carbon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg></div>
+      <div class="modal-title"><h3>Registrar consumo / emisión <span class="manual-badge" id="badge-carbon-modal">0</span></h3><p>Registro rápido · supervisores · personal operativo</p></div>
+      <button class="modal-close" onclick="closeModal('modal-carbon')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-carbon-body"></div>
+  </div>
+</div>
+<!-- MODAL PDF -->
+<div class="modal-overlay" id="modal-pdf">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-header-icon pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="modal-title"><h3>Generar Informe PDF</h3><p>Selecciona período y secciones a incluir</p></div>
+      <button class="modal-close" onclick="closeModal('modal-pdf')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px">Período</div>
+      <div class="pdf-filter-grid">
+        <div class="pdf-opt sel" id="pdf-opt-all" onclick="selectPdfOpt('all')"><label>📋 Todos los datos</label><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Sin filtro de fecha</div></div>
+        <div class="pdf-opt" id="pdf-opt-month" onclick="selectPdfOpt('month')"><label>📅 Mes específico</label><input type="month" id="pdf-month-val" style="display:none"></div>
+        <div class="pdf-opt" id="pdf-opt-year" onclick="selectPdfOpt('year')"><label>📆 Año completo</label><select id="pdf-year-val" style="display:none"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
+        <div class="pdf-opt" id="pdf-opt-range" onclick="selectPdfOpt('range')"><label>📊 Rango de fechas</label><div id="pdf-range-wrap" style="display:none"><input type="date" id="pdf-range-from" style="margin-bottom:4px"><input type="date" id="pdf-range-to"></div></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:14px 0 8px">Secciones</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label class="pdf-sec-check"><input type="checkbox" id="pdf-sec-water" checked> 💧 Huella Hídrica</label>
+        <label class="pdf-sec-check"><input type="checkbox" id="pdf-sec-waste" checked> 🗑️ Gestión de Residuos</label>
+        <label class="pdf-sec-check"><input type="checkbox" id="pdf-sec-carbon" checked> ☁️ Huella de Carbono</label>
+        <label class="pdf-sec-check"><input type="checkbox" id="pdf-sec-interpret" checked> 📝 Interpretación y recomendaciones</label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+        <button class="btn" onclick="closeModal('modal-pdf')">Cancelar</button>
+        <button class="btn btn-primary" id="pdf-generate-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Generar PDF
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="toast-container" id="toasts"></div>
@@ -2759,7 +2956,7 @@ function renderWater() {
       labels: meterSorted.map(e => e[0]),
       datasets: [{ label: 'm³', data: meterSorted.map(e => e[1]), backgroundColor: COLORS, borderRadius: 6, borderSkipped: false }]
     },
-    options: { ...chartOpts({ yLabel: 'm³' }), indexAxis: 'y', plugins: { legend: { display: false }, tooltip: chartOpts().plugins.tooltip } }
+    options: { ...chartOpts({ yLabel: 'm³' }), indexAxis: 'y', plugins: { legend: { display: false }, tooltip: tooltipHoriz('m³') } }
   });
 
   const monthData = {};
@@ -2785,6 +2982,12 @@ function renderWater() {
 
   renderWaterTable(data);
   document.getElementById('water-record-count').textContent = data.length;
+  // Mostrar tabla en subtab traza si ya está activo
+  const wTrazaWrap = document.getElementById('water-traza-wrap');
+  if (wTrazaWrap) {
+    const trazaActive = document.getElementById('water-panel-traza')?.classList.contains('active');
+    wTrazaWrap.style.display = trazaActive ? 'block' : 'none';
+  }
 }
 
 function renderWaterTable(data) {
@@ -2872,7 +3075,7 @@ function renderWaste() {
       labels: subSorted.map(e => e[0]),
       datasets: [{ label: 'kg', data: subSorted.map(e => e[1]), backgroundColor: C.waste + 'dd', borderRadius: 6, borderSkipped: false }]
     },
-    options: { ...chartOpts({ yLabel: 'kg' }), indexAxis: 'y', plugins: { legend: { display: false }, tooltip: chartOpts().plugins.tooltip } }
+    options: { ...chartOpts({ yLabel: 'kg' }), indexAxis: 'y', plugins: { legend: { display: false }, tooltip: tooltipHoriz('kg') } }
   });
 
   const monthData = {};
@@ -2904,6 +3107,11 @@ function renderWaste() {
 
   renderWasteTable(data);
   document.getElementById('waste-record-count').textContent = data.length;
+  const wrTrazaWrap = document.getElementById('waste-traza-wrap');
+  if (wrTrazaWrap) {
+    const trazaActive = document.getElementById('waste-panel-traza')?.classList.contains('active');
+    wrTrazaWrap.style.display = trazaActive ? 'block' : 'none';
+  }
 }
 
 function renderWasteTable(data) {
@@ -3019,6 +3227,11 @@ function renderCarbon() {
 
   renderCarbonTable(data);
   document.getElementById('carbon-record-count').textContent = data.length;
+  const cTrazaWrap = document.getElementById('carbon-traza-wrap');
+  if (cTrazaWrap) {
+    const trazaActive = document.getElementById('carbon-panel-traza')?.classList.contains('active');
+    cTrazaWrap.style.display = trazaActive ? 'block' : 'none';
+  }
 }
 
 function renderCarbonTable(data) {
@@ -3574,128 +3787,7 @@ function updateNavCounts() {
 /* ============================================================
    EXPORTS
    ============================================================ */
-document.getElementById('btn-export-pdf').addEventListener('click', async () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
-
-  doc.setFillColor(10, 31, 22);
-  doc.rect(0, 0, 210, 40, 'F');
-  doc.setFillColor(212, 245, 66);
-  doc.circle(190, 20, 15, 'F');
-  doc.setTextColor(212, 245, 66);
-  doc.setFontSize(24); doc.setFont('helvetica','bold');
-  doc.text('EcoTrack', 14, 20);
-  doc.setFontSize(10); doc.setFont('helvetica','normal');
-  doc.setTextColor(200, 200, 200);
-  doc.text('Plataforma de Gestión Ambiental', 14, 27);
-  doc.text(`Informe: ${new Date().toLocaleString('es-BO')}`, 14, 33);
-
-  let y = 52;
-  doc.setTextColor(40, 40, 40);
-  doc.setFontSize(18); doc.setFont('helvetica','bold');
-  doc.text('Resumen Ejecutivo', 14, y); y += 2;
-  doc.setDrawColor(30, 83, 64); doc.setLineWidth(1);
-  doc.line(14, y+2, 40, y+2);
-  y += 8;
-
-  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
-  const waterTotal = state.water.reduce((s,r)=>s+r.consumo,0);
-  const wasteTotal = state.waste.reduce((s,r)=>s+toKg(r),0);
-  const recycledPDF = state.waste.reduce((s,r)=>s+(r._reciclada||0),0);
-  const recyclable  = state.waste.filter(r => r.tipo === 'RECICLABLE').reduce((s,r)=>s+toKg(r),0);
-  const recycleRate = wasteTotal > 0 ? (recycledPDF/wasteTotal)*100 : 0;
-  const carbonTotal = state.carbon.reduce((s,r)=>s+r.tco2e,0);
-
-  doc.autoTable({
-    startY: y, theme: 'plain',
-    head: [['Indicador', 'Valor', 'Unidad']],
-    body: [
-      ['Huella de carbono',     fmtFull(carbonTotal), 'tnCO₂eq'],
-      ['Consumo total de agua', fmtFull(waterTotal), 'm³'],
-      ['Residuos generados',    fmtFull(wasteTotal), 'kg'],
-      ['Tasa de reciclaje',     recycleRate.toFixed(2), '%'],
-      ['Registros totales',     (state.water.length + state.waste.length + state.carbon.length).toString(), 'registros'],
-    ],
-    headStyles: { fillColor: [10, 31, 22], textColor: [212, 245, 66], fontSize: 10 },
-    bodyStyles: { fontSize: 10 },
-    alternateRowStyles: { fillColor: [245, 244, 238] }
-  });
-  y = doc.lastAutoTable.finalY + 12;
-
-  const addChart = (chartId, title) => {
-    if (!state.charts[chartId]) return;
-    if (y > 230) { doc.addPage(); y = 20; }
-    doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.setTextColor(10, 31, 22);
-    doc.text(title, 14, y); y += 4;
-    const img = state.charts[chartId].toBase64Image('image/png', 1);
-    doc.addImage(img, 'PNG', 14, y, 180, 80);
-    y += 86;
-  };
-  addChart('chart-home-trend', 'Tendencia Consolidada');
-  addChart('chart-home-impact', 'Composición de Emisiones');
-
-  if (state.water.length > 0) {
-    if (y > 230) { doc.addPage(); y = 20; }
-    doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.setTextColor(10, 31, 22);
-    doc.text('Huella Hídrica', 14, y); y += 5;
-    const plantTotals = {};
-    state.water.forEach(r => plantTotals[r.sucursal] = (plantTotals[r.sucursal]||0) + r.consumo);
-    doc.autoTable({
-      startY: y, theme: 'striped',
-      head: [['Planta', 'Consumo (m³)', '% del total']],
-      body: Object.entries(plantTotals).map(([p,v]) => [p, fmtFull(v), (v/waterTotal*100).toFixed(1)+'%']),
-      headStyles: { fillColor: [59, 130, 196], textColor: 255 },
-      styles: { fontSize: 9 }
-    });
-    y = doc.lastAutoTable.finalY + 8;
-  }
-
-  if (state.waste.length > 0) {
-    if (y > 230) { doc.addPage(); y = 20; }
-    doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.setTextColor(10, 31, 22);
-    doc.text('Gestión de Residuos', 14, y); y += 5;
-    const catTotals = {};
-    state.waste.forEach(r => catTotals[r.categoria] = (catTotals[r.categoria]||0) + toKg(r));
-    doc.autoTable({
-      startY: y, theme: 'striped',
-      head: [['Categoría', 'Cantidad (kg)', '% del total']],
-      body: Object.entries(catTotals).map(([c,v]) => [c, fmtFull(v), (v/wasteTotal*100).toFixed(1)+'%']),
-      headStyles: { fillColor: [199, 122, 42], textColor: 255 },
-      styles: { fontSize: 9 }
-    });
-    y = doc.lastAutoTable.finalY + 8;
-  }
-
-  if (state.carbon.length > 0) {
-    if (y > 230) { doc.addPage(); y = 20; }
-    doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.setTextColor(10, 31, 22);
-    doc.text('Huella de Carbono', 14, y); y += 5;
-    const srcTotals = {};
-    state.carbon.forEach(r => srcTotals[r.categoria] = (srcTotals[r.categoria]||0) + r.tco2e);
-    doc.autoTable({
-      startY: y, theme: 'striped',
-      head: [['Fuente', 'tnCO₂eq', '% del total']],
-      body: Object.entries(srcTotals).sort((a,b)=>b[1]-a[1])
-        .map(([c,v]) => [c, fmtFull(v,3), (v/carbonTotal*100).toFixed(1)+'%']),
-      headStyles: { fillColor: [30, 83, 64], textColor: [212, 245, 66] },
-      styles: { fontSize: 9 }
-    });
-  }
-
-  const pages = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8); doc.setTextColor(140);
-    doc.text(`EcoTrack · Informe auditable · Página ${i} de ${pages}`, 105, 290, { align: 'center' });
-  }
-
-  doc.save(`EcoTrack_Informe_${new Date().toISOString().slice(0,10)}.pdf`);
-  toast('Informe PDF generado', 'Listo para revisión');
-});
+// PDF abierto vía modal (ver generarPDFMejorado)
 
 document.getElementById('btn-export-xlsx').addEventListener('click', () => {
   const wb = XLSX.utils.book_new();
@@ -3855,6 +3947,7 @@ function loadDemoData() {
 
   const total = waterDemo.length + wasteDemo.length + carbonDemo.length;
   toast('Datos demo cargados', `${total} registros de ejemplo añadidos`);
+  syncModalBadges();
   updateNavCounts();
   updateHomeStats();
   renderHome();
@@ -4558,6 +4651,334 @@ function updateManualBadges() {
   if (bw)  bw.textContent  = state.water.filter(r => r._manual).length;
   if (bwr) bwr.textContent = state.waste.filter(r => r._manual).length;
   if (bc)  bc.textContent  = state.carbon.filter(r => r._manual).length;
+}
+
+/* ============================================================
+   SUBTABS
+   ============================================================ */
+function switchSubtab(mod, tab) {
+  ['ind','traza'].forEach(t => {
+    const panel = document.getElementById(mod+'-panel-'+t);
+    const btn   = document.getElementById(mod+'-tab-'+t);
+    if (panel) panel.classList.toggle('active', t===tab);
+    if (btn)   btn.classList.toggle('active',   t===tab);
+  });
+  // Mostrar tabla de trazabilidad solo si hay datos
+  const wrapId = {water:'water-traza-wrap', waste:'waste-traza-wrap', carbon:'carbon-traza-wrap'}[mod];
+  const wrap = document.getElementById(wrapId);
+  if (wrap) {
+    const counts = {water: state.water.length, waste: state.waste.length, carbon: state.carbon.length};
+    wrap.style.display = (tab==='traza' && counts[mod]>0) ? 'block' : 'none';
+  }
+}
+
+/* ============================================================
+   MODALES
+   ============================================================ */
+function openModal(id) {
+  // Mover formulario al modal-body si aún no está
+  const srcMap = {
+    'modal-water':  {src:'form-water-src',  body:'modal-water-body'},
+    'modal-waste':  {src:'form-waste-src',  body:'modal-waste-body'},
+    'modal-carbon': {src:'form-carbon-src', body:'modal-carbon-body'},
+  };
+  const map = srcMap[id];
+  if (map) {
+    const bodyEl = document.getElementById(map.body);
+    const srcEl  = document.getElementById(map.src);
+    if (bodyEl && srcEl && bodyEl.children.length === 0) {
+      // Mover todos los hijos del src al body del modal
+      while (srcEl.children.length > 0) {
+        bodyEl.appendChild(srcEl.children[0]);
+      }
+    }
+  }
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Cerrar con Escape o click en overlay
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape')
+    ['modal-water','modal-waste','modal-carbon','modal-pdf'].forEach(closeModal);
+});
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
+});
+
+// Sincronizar badges del modal con los del módulo
+function syncModalBadges() {
+  const pairs = [
+    ['badge-water-manual','badge-water-modal'],
+    ['badge-waste-manual', 'badge-waste-modal'],
+    ['badge-carbon-manual','badge-carbon-modal'],
+  ];
+  pairs.forEach(([src,dst]) => {
+    const s = document.getElementById(src);
+    const d = document.getElementById(dst);
+    if (s && d) d.textContent = s.textContent;
+  });
+}
+
+/* ============================================================
+   PDF — selector de período
+   ============================================================ */
+let _pdfOpt = 'all';
+
+function selectPdfOpt(opt) {
+  _pdfOpt = opt;
+  ['all','month','year','range'].forEach(o => {
+    document.getElementById('pdf-opt-'+o)?.classList.toggle('sel', o===opt);
+  });
+  const show = id => { const el=document.getElementById(id); if(el) el.style.display='block'; };
+  const hide = id => { const el=document.getElementById(id); if(el) el.style.display='none'; };
+  hide('pdf-month-val'); hide('pdf-year-val'); hide('pdf-range-wrap');
+  if (opt==='month') show('pdf-month-val');
+  if (opt==='year')  show('pdf-year-val');
+  if (opt==='range') show('pdf-range-wrap');
+}
+
+function getPdfFilter() {
+  if (_pdfOpt==='all') return null;
+  if (_pdfOpt==='month') {
+    const v = document.getElementById('pdf-month-val')?.value;
+    if (!v) return null;
+    const [y,m] = v.split('-').map(Number);
+    return { from: new Date(y,m-1,1), to: new Date(y,m,0) };
+  }
+  if (_pdfOpt==='year') {
+    const y = parseInt(document.getElementById('pdf-year-val')?.value||'2026');
+    return { from: new Date(y,0,1), to: new Date(y,11,31) };
+  }
+  if (_pdfOpt==='range') {
+    const f = document.getElementById('pdf-range-from')?.value;
+    const t = document.getElementById('pdf-range-to')?.value;
+    if (!f||!t) return null;
+    return { from: new Date(f), to: new Date(t) };
+  }
+  return null;
+}
+
+function applyPdfFilter(data, df) {
+  if (!df) return data;
+  return data.filter(r => r.fecha >= df.from && r.fecha <= df.to);
+}
+
+// Reemplazar listener PDF por apertura de modal
+document.getElementById('btn-export-pdf').addEventListener('click', () => openModal('modal-pdf'));
+document.getElementById('pdf-generate-btn')?.addEventListener('click', () => {
+  closeModal('modal-pdf');
+  generarPDFMejorado();
+});
+
+async function generarPDFMejorado() {
+  const { jsPDF } = window.jspdf;
+  const doc  = new jsPDF('p','mm','a4');
+  const df   = getPdfFilter();
+  const toKg = r => r.cantidad * (UNIT_TO_KG[norm(r.unidad)] ?? 1);
+
+  const wData  = applyPdfFilter(state.water,  df);
+  const wrData = applyPdfFilter(state.waste,  df);
+  const cData  = applyPdfFilter(state.carbon, df);
+
+  const wTotal  = wData.reduce((s,r)=>s+r.consumo,0);
+  const wrTotal = wrData.reduce((s,r)=>s+toKg(r),0);
+  const recTotal= wrData.reduce((s,r)=>s+(r._reciclada||0),0);
+  const recRate = wrTotal>0 ? (recTotal/wrTotal)*100 : 0;
+  const cTotal  = cData.reduce((s,r)=>s+r.tco2e,0);
+
+  const incW  = document.getElementById('pdf-sec-water')?.checked !== false;
+  const incWr = document.getElementById('pdf-sec-waste')?.checked !== false;
+  const incC  = document.getElementById('pdf-sec-carbon')?.checked !== false;
+  const incI  = document.getElementById('pdf-sec-interpret')?.checked !== false;
+
+  let periodo = 'Todos los datos registrados';
+  if (df) periodo = df.from.toLocaleDateString('es-BO') + ' — ' + df.to.toLocaleDateString('es-BO');
+
+  // ── PORTADA ──
+  doc.setFillColor(15,42,74); doc.rect(0,0,210,297,'F');
+  doc.setFillColor(37,99,168); doc.circle(175,55,38,'F');
+  doc.setFillColor(14,165,233,0.5); doc.circle(25,245,22,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(44); doc.setFont('helvetica','bold');
+  doc.text('EcoTrack', 18, 128);
+  doc.setFontSize(15); doc.setFont('helvetica','normal');
+  doc.setTextColor(180,210,240);
+  doc.text('Plataforma de Gestión Ambiental', 18, 143);
+  doc.setFontSize(12); doc.setTextColor(140,180,220);
+  doc.text('INFORME TÉCNICO AMBIENTAL', 18, 162);
+  doc.setFontSize(10);
+  doc.text('Período: ' + periodo, 18, 175);
+  doc.text('Generado: ' + new Date().toLocaleString('es-BO'), 18, 185);
+  doc.setDrawColor(37,99,168); doc.setLineWidth(0.5);
+  doc.line(18,196,192,196);
+  doc.setFontSize(8.5); doc.setTextColor(100,140,180);
+  doc.text('Conforme a principios de eficiencia de recursos, gestión ambiental y reducción de impacto.', 18, 204);
+
+  doc.addPage();
+  let y = 22;
+
+  // Header de página
+  const pageHeader = () => {
+    doc.setFillColor(15,42,74); doc.rect(0,0,210,12,'F');
+    doc.setTextColor(255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('EcoTrack · Informe Técnico Ambiental', 12, 8);
+    doc.setTextColor(180,210,240); doc.setFont('helvetica','normal');
+    doc.text(periodo, 198, 8, {align:'right'});
+  };
+  pageHeader();
+
+  // ── RESUMEN EJECUTIVO ──
+  y = 26;
+  doc.setTextColor(15,42,74); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('Resumen Ejecutivo', 12, y); y += 3;
+  doc.setLineWidth(1.2); doc.setDrawColor(37,99,168); doc.line(12,y,75,y); y += 9;
+  doc.autoTable({
+    startY:y, theme:'grid',
+    head:[['Indicador','Valor','Unidad','Registros']],
+    body:[
+      ['Huella de carbono',   fmtFull(cTotal,2),'tnCO₂eq', cData.length],
+      ['Consumo de agua',     fmtFull(wTotal,2),'m³',       wData.length],
+      ['Residuos generados',  fmtFull(wrTotal,2),'kg',      wrData.length],
+      ['Cantidad reciclada',  fmtFull(recTotal,2),'kg',     '—'],
+      ['Tasa de reciclaje',   recRate.toFixed(1)+'%','—',   '—'],
+    ],
+    headStyles:{fillColor:[15,42,74],textColor:255,fontSize:9,fontStyle:'bold'},
+    bodyStyles:{fontSize:9},
+    alternateRowStyles:{fillColor:[240,244,248]},
+    columnStyles:{1:{halign:'right'},3:{halign:'right'}},
+  });
+  y = doc.lastAutoTable.finalY + 12;
+
+  // ── AGUA ──
+  if (incW && wData.length>0) {
+    if (y>220){doc.addPage();pageHeader();y=22;}
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(15,42,74);
+    doc.text('💧 Huella Hídrica', 12, y); y+=3;
+    doc.setLineWidth(1); doc.setDrawColor(14,165,233); doc.line(12,y,58,y); y+=8;
+    const dias = Math.max([...new Set(wData.map(r=>r.fecha.toISOString().slice(0,10)))].length,1);
+    const plantsW = [...new Set(wData.map(r=>r.sucursal))];
+    const meterMap = {};
+    wData.forEach(r=>meterMap[r.medidor]=(meterMap[r.medidor]||0)+r.consumo);
+    const topM = Object.entries(meterMap).sort((a,b)=>b[1]-a[1])[0];
+    const txt = `Durante el período analizado se registró un consumo hídrico total de ${fmtFull(wTotal,2)} m³ en ${plantsW.length} instalación(es), con un promedio de ${fmt(wTotal/dias)} m³/día. ${topM?`El medidor con mayor consumo es "${topM[0]}" con ${fmtFull(topM[1],2)} m³ (${wTotal>0?(topM[1]/wTotal*100).toFixed(1):0}% del total). `:''  }Se recomienda implementar auditorías hídricas periódicas y establecer metas de reducción por punto de medición.`;
+    const lines = doc.splitTextToSize(txt, 184);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(50,70,90);
+    doc.text(lines,12,y); y+=lines.length*4.5+6;
+    const ptW = {};
+    wData.forEach(r=>ptW[r.sucursal]=(ptW[r.sucursal]||0)+r.consumo);
+    doc.autoTable({
+      startY:y, theme:'striped',
+      head:[['Planta','Consumo (m³)','% del total']],
+      body:Object.entries(ptW).map(([p,v])=>[p,fmtFull(v,2),(v/wTotal*100).toFixed(1)+'%']),
+      headStyles:{fillColor:[14,165,233],textColor:255,fontSize:9},
+      styles:{fontSize:9}, columnStyles:{1:{halign:'right'},2:{halign:'right'}},
+    });
+    y = doc.lastAutoTable.finalY+12;
+  }
+
+  // ── RESIDUOS ──
+  if (incWr && wrData.length>0) {
+    if (y>220){doc.addPage();pageHeader();y=22;}
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(15,42,74);
+    doc.text('🗑️ Gestión de Residuos', 12, y); y+=3;
+    doc.setLineWidth(1); doc.setDrawColor(217,119,6); doc.line(12,y,73,y); y+=8;
+    const pelig = wrData.filter(r=>r.tipo==='PELIGROSO').reduce((s,r)=>s+toKg(r),0);
+    const txt2 = `Se generaron ${fmtFull(wrTotal,2)} kg de residuos totales, de los cuales ${fmtFull(pelig,2)} kg (${wrTotal>0?(pelig/wrTotal*100).toFixed(1):0}%) son residuos peligrosos con manejo especializado. La cantidad efectivamente reciclada fue ${fmtFull(recTotal,2)} kg, logrando una tasa de reciclaje del ${recRate.toFixed(1)}%. ${recRate>=50?'El indicador supera el 50%, reflejando una gestión eficiente.':'Se recomienda fortalecer la segregación en origen y ampliar acuerdos con gestores certificados.'}`;
+    const lines2 = doc.splitTextToSize(txt2,184);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(50,70,90);
+    doc.text(lines2,12,y); y+=lines2.length*4.5+6;
+    const catWr = {};
+    wrData.forEach(r=>catWr[r.tipo]=(catWr[r.tipo]||0)+toKg(r));
+    doc.autoTable({
+      startY:y, theme:'striped',
+      head:[['Tipo','Cantidad (kg)','% del total','Registros']],
+      body:Object.entries(catWr).sort((a,b)=>b[1]-a[1]).map(([t,v])=>[t,fmtFull(v,2),(v/wrTotal*100).toFixed(1)+'%',wrData.filter(r=>r.tipo===t).length]),
+      headStyles:{fillColor:[217,119,6],textColor:255,fontSize:9},
+      styles:{fontSize:9}, columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}},
+    });
+    y = doc.lastAutoTable.finalY+12;
+  }
+
+  // ── CARBONO ──
+  if (incC && cData.length>0) {
+    if (y>220){doc.addPage();pageHeader();y=22;}
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(15,42,74);
+    doc.text('☁️ Huella de Carbono', 12, y); y+=3;
+    doc.setLineWidth(1); doc.setDrawColor(5,150,105); doc.line(12,y,67,y); y+=8;
+    const srcC = {};
+    cData.forEach(r=>srcC[r.categoria]=(srcC[r.categoria]||0)+r.tco2e);
+    const topS = Object.entries(srcC).sort((a,b)=>b[1]-a[1])[0];
+    const txt3 = `Las actividades operativas generaron ${fmtFull(cTotal,3)} tnCO₂eq. ${topS?`La fuente de mayor impacto es "${topS[0]}" con ${fmtFull(topS[1],3)} tnCO₂eq (${cTotal>0?(topS[1]/cTotal*100).toFixed(1):0}% del total). `:''}Se recomienda establecer un inventario GHG anual documentado, evaluar proyectos de eficiencia energética y establecer metas de reducción alineadas con GHG Protocol e ISO 14064.`;
+    const lines3 = doc.splitTextToSize(txt3,184);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(50,70,90);
+    doc.text(lines3,12,y); y+=lines3.length*4.5+6;
+    doc.autoTable({
+      startY:y, theme:'striped',
+      head:[['Fuente','tnCO₂eq','% del total','Registros']],
+      body:Object.entries(srcC).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c,fmtFull(v,3),(v/cTotal*100).toFixed(1)+'%',cData.filter(r=>r.categoria===c).length]),
+      headStyles:{fillColor:[5,150,105],textColor:255,fontSize:9},
+      styles:{fontSize:9}, columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}},
+    });
+    y = doc.lastAutoTable.finalY+12;
+  }
+
+  // ── INTERPRETACIÓN ──
+  if (incI) {
+    if (y>200){doc.addPage();pageHeader();y=22;}
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(15,42,74);
+    doc.text('📝 Conclusiones y Recomendaciones', 12, y); y+=3;
+    doc.setLineWidth(1); doc.setDrawColor(37,99,168); doc.line(12,y,102,y); y+=8;
+    const recs = [];
+    if (wTotal>0)   recs.push('Agua: Implementar auditorías hídricas periódicas por medidor. Establecer líneas base de consumo mensual para detectar desviaciones tempranas y optimizar la eficiencia hídrica de cada instalación.');
+    if (wrTotal>0)  recs.push(`Residuos: Tasa de reciclaje actual: ${recRate.toFixed(1)}%. ${recRate<50?'Se recomienda superar el 50% fortaleciendo la segregación en origen y ampliando acuerdos con gestores certificados.':'Mantener el desempeño actual con metas incrementales anuales.'}`);
+    if (cTotal>0)   recs.push('Carbono: Establecer un inventario GHG anual. Priorizar la reducción en las fuentes de mayor participación, evaluar sustitución de combustibles y considerar energías renovables.');
+    recs.push('General: Mantener el registro continuo de datos para garantizar trazabilidad y calidad del informe ambiental. Comunicar resultados a la dirección y establecer metas de mejora continua.');
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(50,70,90);
+    recs.forEach((r,i) => {
+      const ls = doc.splitTextToSize((i+1)+'. '+r, 182);
+      if (y+ls.length*4.5>272){doc.addPage();pageHeader();y=22;}
+      doc.text(ls,12,y); y+=ls.length*4.5+5;
+    });
+  }
+
+  // ── PIE DE PÁGINA ──
+  const np = doc.internal.getNumberOfPages();
+  for (let i=1;i<=np;i++) {
+    doc.setPage(i);
+    doc.setFillColor(15,42,74); doc.rect(0,287,210,10,'F');
+    doc.setFontSize(7); doc.setTextColor(180,210,240); doc.setFont('helvetica','normal');
+    doc.text('EcoTrack · Informe Técnico Ambiental · '+periodo, 12, 293);
+    doc.text('Página '+i+' de '+np, 198, 293, {align:'right'});
+  }
+
+  doc.save('EcoTrack_Informe_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF generado', 'Descarga lista');
+}
+
+/* ============================================================
+   FIX TOOLTIP BARRAS HORIZONTALES (indexAxis: 'y')
+   Con indexAxis:'y', el valor real está en ctx.parsed.x
+   ============================================================ */
+function tooltipHoriz(unit) {
+  return {
+    backgroundColor: '#0a1f3a',
+    padding: 12,
+    cornerRadius: 8,
+    callbacks: {
+      title: ctx => ctx[0]?.label || '',
+      label: ctx => '  ' + fmtFull(ctx.parsed.x) + ' ' + unit,
+    }
+  };
 }
 
 init();
