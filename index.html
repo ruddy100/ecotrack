@@ -150,7 +150,10 @@ async function sbCargarTodo() {
         cantidad:     r.cantidad,
         unidad:       r.unidad,
         tipo:         r.tipo,
-        _reciclada:   r.cantidad_reciclada || 0,
+        // Si es RECICLABLE y no tiene cantidad_reciclada → 100%
+        _reciclada: (r.tipo === 'RECICLABLE' && !r.cantidad_reciclada)
+                    ? r.cantidad
+                    : (r.cantidad_reciclada || 0),
       }));
     }
     if (c?.length) {
@@ -1778,10 +1781,7 @@ input, select { font-family: inherit; color: inherit; }
             <div class="chart-wrap"><canvas id="chart-water-trend"></canvas></div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="water-record-count">0</span> registros</div></div></div>
-            <div class="table-wrap table-compact"><table class="table" id="table-water"></table></div>
-          </div>
+          
         </div>
         </div>
 
@@ -1949,10 +1949,7 @@ input, select { font-family: inherit; color: inherit; }
             <div class="chart-wrap"><canvas id="chart-waste-trend"></canvas></div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Registros detallados</div><div class="panel-sub"><span id="waste-record-count">0</span> registros</div></div></div>
-            <div class="table-wrap table-compact"><table class="table" id="table-waste"></table></div>
-          </div>
+          
         </div>
         </div>
 
@@ -2132,10 +2129,7 @@ input, select { font-family: inherit; color: inherit; }
             <div class="chart-wrap"><canvas id="chart-carbon-trend"></canvas></div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header"><div><div class="panel-eyebrow">Trazabilidad</div><div class="panel-title">Detalle de emisiones</div><div class="panel-sub"><span id="carbon-record-count">0</span> registros con factor aplicado</div></div></div>
-            <div class="table-wrap table-compact"><table class="table" id="table-carbon"></table></div>
-          </div>
+          
         </div>
         </div>
 
@@ -2717,11 +2711,18 @@ function parseWaste(wb) {
       subcategoria:  String(subcategoria || '').trim(),
       cantidad,
       unidad:        String(unidad || '').trim(),
-      _reciclada:    reciclada,
       tipo: catN.includes('PELIGROSO')    ? 'PELIGROSO'       :
             catN.includes('RECICLABLE')   ? 'RECICLABLE'      :
             catN.includes('APROVECHABLE') ? 'NO APROVECHABLE' : 'OTROS',
+      // Si es RECICLABLE sin cantidad_reciclada explícita → 100% reciclado
+      get _reciclada_tipo() { return catN.includes('RECICLABLE') ? 'RECICLABLE' : 'OTRO'; },
     });
+    // Auto-calcular reciclada para el último registro añadido
+    if (parsed.length > 0) {
+      const last = parsed[parsed.length - 1];
+      if (last.tipo === 'RECICLABLE' && reciclada === 0) last._reciclada = last.cantidad;
+      else last._reciclada = reciclada;
+    }
   }
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   state.waste = parsed;
@@ -4416,10 +4417,11 @@ function initFormWaste() {
 
     const catMap = { 'PELIGROSO':'Residuo Peligroso','RECICLABLE':'Residuo reciclable',
                      'NO APROVECHABLE':'Residuo no aprovechable','OTROS':'Otros' };
+    const _recicladaManual = (tipo === 'RECICLABLE' && reciclada === 0) ? cantidad : reciclada;
     const registro = {
       fecha: new Date(fecha+'T12:00:00'), planta,
       categoria: catMap[tipo]||tipo, subcategoria: sub,
-      cantidad, unidad, tipo, _reciclada: reciclada, _manual: true,
+      cantidad, unidad, tipo, _reciclada: _recicladaManual, _manual: true,
     };
     state.waste.push(registro);
     sbGuardarResiduos(registro);
