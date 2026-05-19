@@ -1821,7 +1821,11 @@ input, select { font-family: inherit; color: inherit; }
       </div>
       <div class="gf2">
         <label class="gf2-lbl">Lectura actual <span class="req">*</span></label>
-        <input class="gf2-inp" type="number" id="gw-lact" placeholder="0.000" min="0" step="0.001" inputmode="decimal">
+        <input class="gf2-inp" type="text" id="gw-lact" placeholder="Ej: 6885,60 ó 688560" inputmode="decimal" autocomplete="off" pattern="[0-9.,]*">
+        <div style="margin-top:6px;font-size:11px;color:#475569;display:flex;align-items:center;gap:5px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Los últimos 2 dígitos son litros. Ej: <strong style="color:#94a3b8">688560</strong> → <strong style="color:#10b981">6885,60 m³</strong>
+        </div>
       </div>
       <div class="guard-alert" id="gw-alert">
         ⚠️ La lectura actual no puede ser menor que la anterior. Verifica el valor.
@@ -5485,6 +5489,43 @@ document.getElementById('guard-logout-btn')?.addEventListener('click', () => {
 /* ============================================================
    FORMULARIO GUARDIA
    ============================================================ */
+
+/* ── Parsear lectura de medidor de agua ──
+   El medidor tiene 6 dígitos: los 4 primeros = m³, los 2 últimos = litros
+   Acepta: "6885,60"  → 6885.60
+           "688560"   → 6885.60  (sin coma → insertar antes de últimos 2 dígitos)
+           "9815,20"  → 9815.20
+           "449"      → 4.49
+   ─────────────────────────────────────────── */
+function parsearLecturaMedidor(raw) {
+  if (!raw || raw.trim() === '') return NaN;
+  let v = raw.trim();
+
+  // Si ya tiene coma → reemplazar por punto y convertir
+  if (v.includes(',')) {
+    return parseFloat(v.replace(',', '.'));
+  }
+
+  // Si tiene punto → ya es decimal normal
+  if (v.includes('.')) {
+    return parseFloat(v);
+  }
+
+  // Solo dígitos → insertar coma antes de los últimos 2
+  const digits = v.replace(/\D/g, '');
+  if (digits.length < 2) return parseFloat(digits);
+  const entero = digits.slice(0, -2) || '0';
+  const dec    = digits.slice(-2);
+  return parseFloat(entero + '.' + dec);
+}
+
+/* ── Formatear lectura para mostrar al usuario ──
+   6885.60 → "6.885,60"  */
+function formatearLectura(val) {
+  if (isNaN(val)) return '';
+  return val.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+}
+
 let _gwInit = false;
 function gwInitListeners() {
   if (_gwInit) return; _gwInit = true;
@@ -5517,9 +5558,12 @@ function gwInitListeners() {
   });
 
   inpLact?.addEventListener('input', () => {
-    const lant = parseFloat(inpLant?.value)||0;
-    const lact = parseFloat(inpLact.value);
+    const lantRaw = inpLant?.value || '';
+    const lant    = parsearLecturaMedidor(lantRaw) || 0;
+    const lact    = parsearLecturaMedidor(inpLact.value);
+
     if(isNaN(lact)) { if(inpConsumo) inpConsumo.value=''; return; }
+
     if(lact < lant) {
       if(alertEl) alertEl.style.display='block';
       inpLact.classList.add('err');
@@ -5527,7 +5571,16 @@ function gwInitListeners() {
     } else {
       if(alertEl) alertEl.style.display='none';
       inpLact.classList.remove('err');
-      if(inpConsumo) inpConsumo.value=(lact-lant).toFixed(3)+' m³';
+      const consumo = lact - lant;
+      if(inpConsumo) inpConsumo.value = consumo.toFixed(3) + ' m³';
+    }
+  });
+
+  // Al salir del campo → formatear la lectura con coma
+  inpLact?.addEventListener('blur', () => {
+    const lact = parsearLecturaMedidor(inpLact.value);
+    if(!isNaN(lact)) {
+      inpLact.value = formatearLectura(lact);
     }
   });
 
@@ -5550,8 +5603,8 @@ async function gwGuardar() {
   const planta  = document.getElementById('gw-planta')?.value;
   const medidor = document.getElementById('gw-medidor')?.value;
   const lantEl  = document.getElementById('gw-lant');
-  const lact    = parseFloat(document.getElementById('gw-lact')?.value);
-  const lant    = parseFloat(lantEl?.value)||0;
+  const lact    = parsearLecturaMedidor(document.getElementById('gw-lact')?.value);
+  const lant    = parsearLecturaMedidor(lantEl?.value) || 0;
   const alertEl = document.getElementById('gw-alert');
 
   let ok = true;
