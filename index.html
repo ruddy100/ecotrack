@@ -80,8 +80,13 @@ async function sbGuardarLoteAgua(registros) {
     unidad:           r.unidad || 'm3',
     observacion:      r.observacion || null,
   }));
-  try { await db.from('water_readings').insert(rows); }
-  catch(e) { console.warn('Supabase lote agua:', e.message); }
+  // Insertar en chunks de 500 para evitar el límite de Supabase
+  const CHUNK = 500;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    try { await db.from('water_readings').insert(chunk); }
+    catch(e) { console.warn(`Supabase lote agua chunk ${i}-${i+CHUNK}:`, e.message); }
+  }
 }
 
 async function sbGuardarLoteResiduos(registros) {
@@ -96,8 +101,12 @@ async function sbGuardarLoteResiduos(registros) {
     tipo:               r.tipo,
     cantidad_reciclada: r._reciclada || 0,
   }));
-  try { await db.from('waste_records').insert(rows); }
-  catch(e) { console.warn('Supabase lote residuos:', e.message); }
+  const CHUNK = 500;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    try { await db.from('waste_records').insert(chunk); }
+    catch(e) { console.warn(`Supabase lote residuos chunk ${i}-${i+CHUNK}:`, e.message); }
+  }
 }
 
 async function sbGuardarLoteCarbon(registros) {
@@ -112,8 +121,12 @@ async function sbGuardarLoteCarbon(registros) {
     factor:       r.factor,
     tco2e:        r.tco2e,
   }));
-  try { await db.from('carbon_records').insert(rows); }
-  catch(e) { console.warn('Supabase lote carbono:', e.message); }
+  const CHUNK = 500;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    try { await db.from('carbon_records').insert(chunk); }
+    catch(e) { console.warn(`Supabase lote carbono chunk ${i}-${i+CHUNK}:`, e.message); }
+  }
 }
 
 async function sbCargarTodo() {
@@ -2979,8 +2992,10 @@ function parseWater(wb) {
   // Limpiar propiedades internas antes de guardar en state
   parsed.forEach(r => { delete r._lant_excel; delete r._consumo_excel; });
 
-  state.water = parsed;
-  toast('Datos cargados', `${parsed.length} registros de huella hídrica`);
+  // Acumular: mantener datos previos (no demo) + nuevos del Excel
+  const prevWater = state.water.filter(r => !r._demo);
+  state.water = [...prevWater, ...parsed];
+  toast('Datos cargados', `${parsed.length} nuevos registros · ${state.water.length} total en memoria`);
   sbGuardarLoteAgua(parsed);
   renderWater();
   updateNavCounts();
@@ -3093,8 +3108,9 @@ function parseWaste(wb) {
     }
   }
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
-  state.waste = parsed;
-  toast('Datos cargados', `${parsed.length} registros de residuos`);
+  const prevWaste = state.waste.filter(r => !r._demo);
+  state.waste = [...prevWaste, ...parsed];
+  toast('Datos cargados', `${parsed.length} nuevos registros · ${state.waste.length} total en memoria`);
   sbGuardarLoteResiduos(parsed);
   renderWaste();
   updateNavCounts();
@@ -3130,8 +3146,9 @@ function parseCarbon(wb) {
     });
   }
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
-  state.carbon = parsed;
-  toast('Datos cargados', `${parsed.length} registros de emisiones`);
+  const prevCarbon = state.carbon.filter(r => !r._demo);
+  state.carbon = [...prevCarbon, ...parsed];
+  toast('Datos cargados', `${parsed.length} nuevos registros · ${state.carbon.length} total en memoria`);
   sbGuardarLoteCarbon(parsed);
   renderCarbon();
   updateNavCounts();
