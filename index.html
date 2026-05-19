@@ -1462,11 +1462,377 @@ input, select { font-family: inherit; color: inherit; }
 .pdf-opt label{font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;display:block;}
 .pdf-opt input[type=date],.pdf-opt input[type=month],.pdf-opt select{margin-top:6px;width:100%;padding:5px 9px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font);}
 .pdf-sec-check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 0;}
+
+/* ============================================================
+   LOGIN — dark mode estilo profesional
+   ============================================================ */
+.login-screen {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #0d0d0d;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  transition: opacity .3s ease;
+}
+.login-screen.hidden { opacity: 0; pointer-events: none; }
+
+.login-wrap {
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* ── Tarjeta principal ── */
+.login-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px;
+  padding: 36px 32px 32px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+
+/* Brand */
+.lc-brand {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+}
+.lc-brand-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, #2563a8, #14b8a6);
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.lc-brand-icon svg { width: 26px; height: 26px; stroke: #fff; }
+.lc-brand-name { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.02em; margin: 0; }
+.lc-brand-sub  { font-size: 10.5px; font-weight: 700; color: #64748b;
+  letter-spacing: 2px; text-transform: uppercase; margin: 2px 0 0; }
+
+/* Título sección */
+.lc-section-title { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 4px; }
+.lc-section-sub   { font-size: 13px; color: #64748b; margin: 0 0 24px; }
+
+/* Campos */
+.lc-field { margin-bottom: 16px; }
+.lc-field:last-of-type { margin-bottom: 24px; }
+.lc-field-label {
+  display: block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: #64748b; margin-bottom: 8px;
+}
+.lc-input {
+  width: 100%; padding: 13px 16px;
+  background: #0f0f1a; border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 11px; color: #e2e8f0;
+  font-size: 14px; font-family: inherit;
+  box-sizing: border-box; transition: border-color .2s, background .2s;
+  -webkit-appearance: none;
+}
+.lc-input::placeholder { color: #475569; }
+.lc-input:focus { outline: none; border-color: #2563a8; background: #111128; }
+.lc-input.err { border-color: #ef4444; background: rgba(239,68,68,.06); }
+
+/* Error message */
+.lc-error {
+  display: none; margin-bottom: 14px;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  color: #f87171; font-size: 13px; font-weight: 600;
+}
+
+/* Botón principal */
+.lc-btn-main {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #2563a8, #1d4ed8);
+  color: #fff; border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700; letter-spacing: .01em;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition: all .2s;
+  box-shadow: 0 4px 20px rgba(37,99,168,.4);
+  margin-bottom: 0;
+}
+.lc-btn-main:hover { opacity: .92; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(37,99,168,.5); }
+.lc-btn-main:active { transform: translateY(0); }
+.lc-btn-main:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.lc-btn-main svg { width: 17px; height: 17px; }
+
+/* ── Tarjeta guardia (debajo del login) ── */
+.login-guard-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.lgc-divider {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+}
+.lgc-divider-line { flex: 1; height: 1px; background: rgba(255,255,255,.08); }
+.lgc-divider-txt  { font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #475569; white-space: nowrap; }
+
+.lgc-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff; border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700; letter-spacing: .01em;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition: all .2s;
+  box-shadow: 0 4px 20px rgba(5,150,105,.35);
+}
+.lgc-btn:hover { opacity: .92; transform: translateY(-1px); }
+.lgc-btn svg { width: 17px; height: 17px; }
+.lgc-sub { text-align: center; font-size: 11.5px; color: #475569; margin-top: 10px; }
+
+/* ============================================================
+   VISTA GUARDIA — pantalla de registro
+   ============================================================ */
+.guard-screen {
+  display: none; min-height: 100vh;
+  background: #0d0d0d; flex-direction: column;
+}
+.guard-screen.active { display: flex; }
+
+.guard-topbar {
+  background: #1a1a2e;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.guard-brand { display: flex; align-items: center; gap: 10px; }
+.guard-brand-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #10b981; flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+}
+.guard-brand-name { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+.guard-brand-user { font-size: 11.5px; color: #475569; }
+.guard-back {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  color: #94a3b8; border-radius: 9px;
+  padding: 7px 14px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.guard-back:hover { background: rgba(255,255,255,.1); color: #e2e8f0; }
+
+.guard-body {
+  flex: 1; padding: 28px 20px;
+  max-width: 520px; width: 100%; margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Header del formulario */
+.guard-form-header {
+  margin-bottom: 20px;
+}
+.guard-form-title {
+  font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 4px;
+}
+.guard-form-sub { font-size: 13px; color: #475569; margin: 0; }
+
+/* Tarjeta del formulario */
+.guard-fcard {
+  background: #1a1a2e; border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px; padding: 24px; margin-bottom: 16px;
+}
+
+/* Campos */
+.gf2 { margin-bottom: 16px; }
+.gf2:last-child { margin-bottom: 0; }
+.gf2-lbl {
+  display: block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: #64748b; margin-bottom: 7px;
+}
+.gf2-lbl .req { color: #ef4444; }
+.gf2-inp {
+  width: 100%; padding: 13px 16px;
+  background: #0f0f1a; border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 11px; color: #e2e8f0;
+  font-size: 15px; font-family: inherit;
+  box-sizing: border-box; transition: border-color .2s;
+  -webkit-appearance: none; appearance: none;
+}
+.gf2-inp:focus { outline: none; border-color: #2563a8; }
+.gf2-inp.ro {
+  color: #475569; cursor: not-allowed;
+  border-style: dashed; border-color: rgba(255,255,255,.06);
+}
+.gf2-inp.calc {
+  color: #10b981; font-weight: 800; font-size: 22px;
+  cursor: not-allowed; border-style: dashed;
+  border-color: rgba(16,185,129,.3);
+  background: rgba(16,185,129,.04);
+  letter-spacing: .01em;
+}
+.gf2-inp.err { border-color: #ef4444; background: rgba(239,68,68,.06); }
+.gf2-inp::placeholder { color: #334155; }
+
+/* Alerta lectura baja */
+.guard-alert {
+  display: none; padding: 11px 14px; margin-bottom: 14px;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+  border-radius: 10px; color: #f87171;
+  font-size: 13px; font-weight: 600;
+}
+
+/* Botón guardar */
+.guard-save {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff; border: none; border-radius: 13px;
+  font-size: 16px; font-weight: 800; letter-spacing: .02em;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all .2s;
+  box-shadow: 0 6px 24px rgba(5,150,105,.35);
+}
+.guard-save:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(5,150,105,.45); }
+.guard-save:active { transform: translateY(0); }
+.guard-save:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.guard-save svg { width: 19px; height: 19px; }
+
+/* Toast éxito */
+.guard-toast {
+  display: none; margin-top: 14px;
+  background: #064e3b; border: 1px solid rgba(16,185,129,.3);
+  border-radius: 13px; padding: 15px 18px;
+  align-items: center; gap: 12px;
+  animation: fadeIn .3s ease;
+}
+.guard-toast.show { display: flex; }
+.guard-toast svg { width: 22px; height: 22px; stroke: #10b981; flex-shrink: 0; }
+.guard-toast-msg { font-size: 14px; font-weight: 700; color: #10b981; }
+.guard-toast-sub { font-size: 12px; color: #065f46; margin-top: 1px; }
 </style>
 </head>
 <body>
 
-<div class="app">
+<!-- PANTALLA LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-wrap">
+
+    <!-- TARJETA ADMIN -->
+    <div class="login-card">
+      <!-- Brand -->
+      <div class="lc-brand">
+        <div class="lc-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+        </div>
+        <div>
+          <div class="lc-brand-name">EcoTrack</div>
+          <div class="lc-brand-sub">Gestión Ambiental</div>
+        </div>
+      </div>
+
+      <div class="lc-section-title">Iniciar sesión</div>
+      <div class="lc-section-sub">Ingresa con tu cuenta institucional</div>
+
+      <div class="lc-field">
+        <label class="lc-field-label">Correo electrónico</label>
+        <input class="lc-input" type="email" id="lc-email" placeholder="usuario@batebol.com" autocomplete="username">
+      </div>
+      <div class="lc-field">
+        <label class="lc-field-label">Contraseña</label>
+        <input class="lc-input" type="password" id="lc-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="lc-error" id="lc-error">Correo o contraseña incorrectos. Intenta de nuevo.</div>
+
+      <button class="lc-btn-main" id="btn-login-admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Entrar al sistema
+      </button>
+    </div>
+
+    <!-- TARJETA GUARDIA -->
+    <div class="login-guard-card">
+      <div class="lgc-divider">
+        <div class="lgc-divider-line"></div>
+        <div class="lgc-divider-txt">Acceso rápido guardia</div>
+        <div class="lgc-divider-line"></div>
+      </div>
+      <button class="lgc-btn" id="btn-login-guard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+        Registrar nuevo dato de agua
+      </button>
+      <div class="lgc-sub">Sin contraseña · Solo registro de lecturas</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VISTA GUARDIA -->
+<div class="guard-screen" id="guard-screen">
+  <!-- Topbar -->
+  <div class="guard-topbar">
+    <div class="guard-brand">
+      <div class="guard-brand-dot"></div>
+      <div>
+        <div class="guard-brand-name">EcoTrack · Registro de agua</div>
+        <div class="guard-brand-user" id="guard-topbar-user">Modo guardia</div>
+      </div>
+    </div>
+    <button class="guard-back" id="guard-logout-btn">← Volver</button>
+  </div>
+
+  <!-- Formulario -->
+  <div class="guard-body">
+    <div class="guard-form-header">
+      <div class="guard-form-title">Nueva lectura</div>
+      <div class="guard-form-sub">Ingresa los datos del marcador del medidor</div>
+    </div>
+
+    <div class="guard-fcard">
+      <div class="gf2">
+        <label class="gf2-lbl">Fecha <span class="req">*</span></label>
+        <input class="gf2-inp" type="date" id="gw-fecha">
+      </div>
+      <div class="gf2">
+        <label class="gf2-lbl">Planta / Sucursal <span class="req">*</span></label>
+        <select class="gf2-inp" id="gw-planta">
+          <option value="">— Seleccionar —</option>
+          <option value="PLANTA BATERIAS">PLANTA BATERIAS (P.I.4)</option>
+          <option value="PLANTA EX ECOVOLTA">PLANTA EX ECOVOLTA (P.I.3)</option>
+          <option value="PLANTA PYC">PLANTA PYC (P.I.31)</option>
+        </select>
+      </div>
+      <div class="gf2">
+        <label class="gf2-lbl">Medidor <span class="req">*</span></label>
+        <select class="gf2-inp" id="gw-medidor">
+          <option value="">— Seleccionar planta primero —</option>
+        </select>
+      </div>
+      <div class="gf2">
+        <label class="gf2-lbl">Lectura anterior</label>
+        <input class="gf2-inp ro" type="text" id="gw-lant" readonly placeholder="Se autocompleta al elegir el medidor">
+      </div>
+      <div class="gf2">
+        <label class="gf2-lbl">Lectura actual <span class="req">*</span></label>
+        <input class="gf2-inp" type="number" id="gw-lact" placeholder="0.000" min="0" step="0.001" inputmode="decimal">
+      </div>
+      <div class="guard-alert" id="gw-alert">
+        ⚠️ La lectura actual no puede ser menor que la anterior. Verifica el valor.
+      </div>
+      <div class="gf2">
+        <label class="gf2-lbl">Consumo calculado</label>
+        <input class="gf2-inp calc" type="text" id="gw-consumo" readonly placeholder="—">
+      </div>
+    </div>
+
+    <button class="guard-save" id="gw-save">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Guardar lectura
+    </button>
+
+    <div class="guard-toast" id="gw-toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div>
+        <div class="guard-toast-msg" id="gw-toast-msg">Guardado correctamente</div>
+        <div class="guard-toast-sub" id="gw-toast-sub">La lectura fue registrada en el sistema</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
   <!-- ============================================================
        SIDEBAR
   ============================================================ -->
@@ -4983,7 +5349,237 @@ function tooltipHoriz(unit) {
   };
 }
 
-init();
+/* ============================================================
+   USUARIOS — credenciales del sistema
+   Formato: email, password (hash bcrypt simplificado via comparación)
+   ============================================================ */
+const USUARIOS_DB = [
+  { email: 'admin@batebol.com',      pass: 'Batebol2026#',   nombre: 'Administrador',  rol: 'admin'   },
+  { email: 'supervisor@batebol.com', pass: 'Super2026$',      nombre: 'Supervisor HSE', rol: 'admin'   },
+  { email: 'leo@batebol.com',        pass: 'Leo2026!',        nombre: 'Leo Seguridad',  rol: 'admin'   },
+];
+
+const MEDIDORES_X_PLANTA = {
+  'PLANTA BATERIAS':    ['Máquina Lavadora Cargado','Administración','Frente a Snack','Portería Batebol','Pozo 1','Pozo 2'],
+  'PLANTA EX ECOVOLTA': ['Portería Ecovolta'],
+  'PLANTA PYC':         ['Portería PyC'],
+};
+
+let _sessionUser = null;
+
+/* ── LOGIN ADMIN — email + contraseña ── */
+function lcLogin() {
+  const email = document.getElementById('lc-email')?.value?.trim().toLowerCase();
+  const pass  = document.getElementById('lc-pass')?.value;
+  const errEl = document.getElementById('lc-error');
+  const btnEl = document.getElementById('btn-login-admin');
+
+  // Limpiar errores
+  errEl.style.display = 'none';
+  document.getElementById('lc-email')?.classList.remove('err');
+  document.getElementById('lc-pass')?.classList.remove('err');
+
+  if (!email || !pass) {
+    if (!email) document.getElementById('lc-email')?.classList.add('err');
+    if (!pass)  document.getElementById('lc-pass')?.classList.add('err');
+    errEl.textContent = 'Completa todos los campos.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Buscar usuario
+  const user = USUARIOS_DB.find(u => u.email === email && u.pass === pass);
+
+  if (!user) {
+    document.getElementById('lc-email')?.classList.add('err');
+    document.getElementById('lc-pass')?.classList.add('err');
+    errEl.textContent = 'Correo o contraseña incorrectos. Intenta de nuevo.';
+    errEl.style.display = 'block';
+    // Shake animation
+    document.querySelector('.login-card')?.animate([
+      {transform:'translateX(-6px)'},{transform:'translateX(6px)'},
+      {transform:'translateX(-4px)'},{transform:'translateX(4px)'},
+      {transform:'translateX(0)'}
+    ], {duration:350, easing:'ease-out'});
+    return;
+  }
+
+  // Login exitoso
+  _sessionUser = user;
+  btnEl.disabled = true;
+  btnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:17px;height:17px;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Accediendo…';
+
+  setTimeout(() => {
+    const ls = document.getElementById('login-screen');
+    ls.classList.add('hidden');
+    setTimeout(() => ls.style.display = 'none', 300);
+    const app = document.getElementById('main-app');
+    if (app) app.style.display = '';
+    if (!window._appInited) { window._appInited = true; init(); }
+    btnEl.disabled = false;
+    btnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:17px;height:17px;stroke-linecap:round;stroke-linejoin:round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Entrar al sistema';
+  }, 400);
+}
+
+// Enter en campos
+document.getElementById('lc-email')?.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('lc-pass')?.focus(); });
+document.getElementById('lc-pass')?.addEventListener('keydown',  e => { if(e.key==='Enter') lcLogin(); });
+document.getElementById('btn-login-admin')?.addEventListener('click', lcLogin);
+
+/* ── LOGIN GUARDIA — sin contraseña, acceso directo ── */
+document.getElementById('btn-login-guard')?.addEventListener('click', () => {
+  const ls = document.getElementById('login-screen');
+  ls.classList.add('hidden');
+  setTimeout(() => ls.style.display = 'none', 280);
+
+  const gs = document.getElementById('guard-screen');
+  gs.classList.add('active');
+  document.getElementById('guard-topbar-user').textContent = 'Guardia · ' + new Date().toLocaleDateString('es-BO',{weekday:'long',day:'2-digit',month:'long'});
+
+  const fechaEl = document.getElementById('gw-fecha');
+  if (fechaEl) fechaEl.value = todayISO();
+
+  // Cargar datos de Supabase para lectura anterior (sin bloquear)
+  if (!window._sbLoaded) {
+    window._sbLoaded = true;
+    sbCargarTodo().then(() => gwActualizarLant()).catch(() => {});
+  }
+
+  gwInitListeners();
+});
+
+/* ── Volver al login desde guardia ── */
+document.getElementById('guard-logout-btn')?.addEventListener('click', () => {
+  document.getElementById('guard-screen').classList.remove('active');
+  gwLimpiar();
+  const ls = document.getElementById('login-screen');
+  ls.style.display = 'flex'; ls.classList.remove('hidden');
+});
+
+/* ============================================================
+   FORMULARIO GUARDIA
+   ============================================================ */
+let _gwInit = false;
+function gwInitListeners() {
+  if (_gwInit) return; _gwInit = true;
+
+  const selPlanta  = document.getElementById('gw-planta');
+  const selMedidor = document.getElementById('gw-medidor');
+  const inpLact    = document.getElementById('gw-lact');
+  const inpLant    = document.getElementById('gw-lant');
+  const inpConsumo = document.getElementById('gw-consumo');
+  const alertEl    = document.getElementById('gw-alert');
+
+  selPlanta?.addEventListener('change', () => {
+    const planta = selPlanta.value;
+    const mFijos = MEDIDORES_X_PLANTA[planta] || [];
+    const mDatos = [...new Set(state.water.filter(r=>r.sucursal===planta).map(r=>r.medidor))];
+    const todos  = [...new Set([...mFijos,...mDatos])].sort();
+    selMedidor.innerHTML = '<option value="">— Seleccionar medidor —</option>' +
+      todos.map(m=>`<option value="${m}">${m}</option>`).join('');
+    if(inpLant) inpLant.value = '';
+    if(inpLact) { inpLact.value=''; inpLact.classList.remove('err'); }
+    if(inpConsumo) inpConsumo.value='';
+    if(alertEl) alertEl.style.display='none';
+  });
+
+  selMedidor?.addEventListener('change', () => {
+    gwActualizarLant();
+    if(inpLact) { inpLact.value=''; inpLact.classList.remove('err'); }
+    if(inpConsumo) inpConsumo.value='';
+    if(alertEl) alertEl.style.display='none';
+  });
+
+  inpLact?.addEventListener('input', () => {
+    const lant = parseFloat(inpLant?.value)||0;
+    const lact = parseFloat(inpLact.value);
+    if(isNaN(lact)) { if(inpConsumo) inpConsumo.value=''; return; }
+    if(lact < lant) {
+      if(alertEl) alertEl.style.display='block';
+      inpLact.classList.add('err');
+      if(inpConsumo) inpConsumo.value='';
+    } else {
+      if(alertEl) alertEl.style.display='none';
+      inpLact.classList.remove('err');
+      if(inpConsumo) inpConsumo.value=(lact-lant).toFixed(3)+' m³';
+    }
+  });
+
+  document.getElementById('gw-save')?.addEventListener('click', gwGuardar);
+}
+
+function gwActualizarLant() {
+  const planta  = document.getElementById('gw-planta')?.value;
+  const medidor = document.getElementById('gw-medidor')?.value;
+  const inpLant = document.getElementById('gw-lant');
+  if(!medidor||!inpLant) return;
+  const ult = [...state.water]
+    .filter(r=>r.medidor===medidor&&(!planta||r.sucursal===planta))
+    .sort((a,b)=>b.fecha-a.fecha)[0];
+  inpLant.value = ult ? fmtFull(ult.lectura_act,3) : 'Sin registros previos';
+}
+
+async function gwGuardar() {
+  const fecha   = document.getElementById('gw-fecha')?.value;
+  const planta  = document.getElementById('gw-planta')?.value;
+  const medidor = document.getElementById('gw-medidor')?.value;
+  const lantEl  = document.getElementById('gw-lant');
+  const lact    = parseFloat(document.getElementById('gw-lact')?.value);
+  const lant    = parseFloat(lantEl?.value)||0;
+  const alertEl = document.getElementById('gw-alert');
+
+  let ok = true;
+  const markErr = id => { document.getElementById(id)?.classList.add('err'); ok=false; };
+  if(!fecha)   markErr('gw-fecha');
+  if(!planta)  markErr('gw-planta');
+  if(!medidor) markErr('gw-medidor');
+  if(isNaN(lact)||lact<0) markErr('gw-lact');
+  if(!isNaN(lact)&&lact<lant) { if(alertEl) alertEl.style.display='block'; ok=false; }
+  if(!ok) return;
+
+  const btn = document.getElementById('gw-save');
+  if(btn) { btn.disabled=true; btn.innerHTML='<svg style="width:19px;height:19px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Guardando…'; }
+
+  const consumo = parseFloat((lact-lant).toFixed(3));
+  const reg = {
+    fecha: new Date(fecha+'T12:00:00'), sucursal: planta, medidor,
+    lectura_ant: lant, lectura_act: lact, consumo, unidad: 'm3',
+    _consumo_excel: consumo, _lant_excel: lant, _guardia: true,
+  };
+  state.water.push(reg);
+  await sbGuardarAgua(reg).catch(()=>{});
+
+  // Toast de éxito
+  const toast  = document.getElementById('gw-toast');
+  const msg    = document.getElementById('gw-toast-msg');
+  const sub    = document.getElementById('gw-toast-sub');
+  if(msg) msg.textContent = `${consumo.toFixed(3)} m³ registrados en ${medidor}`;
+  if(sub) sub.textContent = new Date(fecha).toLocaleDateString('es-BO',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  if(toast) toast.classList.add('show');
+  setTimeout(()=>{ if(toast) toast.classList.remove('show'); }, 5000);
+
+  // Reset: mantiene planta + medidor, actualiza lectura anterior
+  const lActEl = document.getElementById('gw-lact');
+  const cEl    = document.getElementById('gw-consumo');
+  if(lActEl) { lActEl.value=''; lActEl.classList.remove('err'); }
+  if(cEl) cEl.value='';
+  if(lantEl) lantEl.value = fmtFull(lact,3);
+  if(alertEl) alertEl.style.display='none';
+  if(btn) { btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><polyline points="20 6 9 17 4 12"/></svg> Guardar lectura'; }
+}
+
+function gwLimpiar() {
+  ['gw-planta','gw-lant','gw-lact','gw-consumo'].forEach(id=>{
+    const el=document.getElementById(id); if(el){el.value='';el.classList?.remove('err');}
+  });
+  const sel=document.getElementById('gw-medidor');
+  if(sel) sel.innerHTML='<option value="">— Seleccionar planta primero —</option>';
+  const al=document.getElementById('gw-alert'); if(al) al.style.display='none';
+  const ts=document.getElementById('gw-toast'); if(ts) ts.classList.remove('show');
+  const fe=document.getElementById('gw-fecha'); if(fe) fe.value=todayISO();
+}
+
+// ── La app no se inicia hasta que el admin hace login ──
 </script>
 </body>
 </html>
