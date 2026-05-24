@@ -3002,7 +3002,7 @@ function getCol(row, ...candidates) {
   return undefined;
 }
 
-function parseWater(wb) {
+async function parseWater(wb) {
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
   const parsed = [];
@@ -3054,13 +3054,16 @@ function parseWater(wb) {
   state.uploadHistory.unshift(_wBatch);
   sbRegistrarLote(_wBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.water.length} total en memoria`);
-  sbGuardarLoteAgua(parsed);
+  await sbGuardarLoteAgua(parsed);
+  // Recargar desde Supabase para mostrar el total real (incluyendo cargas anteriores)
+  await sbCargarTodo();
   renderWater();
   updateNavCounts();
   updateHomeStats();
   refreshAllDataLists();
   updateManualBadges();
   refreshDropdownsAll();
+  if (state.currentView === 'data') renderUploadHistory();
 }
 
 /**
@@ -3129,7 +3132,7 @@ function parseWasteLike(wb) {
   return best || XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: null });
 }
 
-function parseWaste(wb) {
+async function parseWaste(wb) {
   const rows = parseWasteLike(wb);
   const parsed = [];
   for (const r of rows) {
@@ -3174,16 +3177,18 @@ function parseWaste(wb) {
   state.uploadHistory.unshift(_wrBatch);
   sbRegistrarLote(_wrBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.waste.length} total en memoria`);
-  sbGuardarLoteResiduos(parsed);
+  await sbGuardarLoteResiduos(parsed);
+  await sbCargarTodo();
   renderWaste();
   updateNavCounts();
   updateHomeStats();
   refreshAllDataLists();
   updateManualBadges();
   refreshDropdownsAll();
+  if (state.currentView === 'data') renderUploadHistory();
 }
 
-function parseCarbon(wb) {
+async function parseCarbon(wb) {
   const rows = parseWasteLike(wb);
   const parsed = [];
   for (const r of rows) {
@@ -3217,13 +3222,15 @@ function parseCarbon(wb) {
   state.uploadHistory.unshift(_cBatch);
   sbRegistrarLote(_cBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.carbon.length} total en memoria`);
-  sbGuardarLoteCarbon(parsed);
+  await sbGuardarLoteCarbon(parsed);
+  await sbCargarTodo();
   renderCarbon();
   updateNavCounts();
   updateHomeStats();
   refreshAllDataLists();
   updateManualBadges();
   refreshDropdownsAll();
+  if (state.currentView === 'data') renderUploadHistory();
 }
 
 /* ============================================================
