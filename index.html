@@ -3048,7 +3048,7 @@ function parseWater(wb) {
   // Acumular: mantener datos previos (no demo) + nuevos del Excel
   const prevWater = state.water.filter(r => !r._demo);
   state.water = [...prevWater, ...parsed];
-  const _wBid = Date.now();
+  const _wBid = new Date().toISOString();
   parsed.forEach(r => r._batchId = _wBid);
   const _wBatch = { id: _wBid, modulo: 'agua', registros: parsed.length, total: state.water.length, fecha: new Date(), archivo: wb.SheetNames[0] };
   state.uploadHistory.unshift(_wBatch);
@@ -3168,7 +3168,7 @@ function parseWaste(wb) {
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   const prevWaste = state.waste.filter(r => !r._demo);
   state.waste = [...prevWaste, ...parsed];
-  const _wrBid = Date.now();
+  const _wrBid = new Date().toISOString();
   parsed.forEach(r => r._batchId = _wrBid);
   const _wrBatch = { id: _wrBid, modulo: 'residuos', registros: parsed.length, total: state.waste.length, fecha: new Date(), archivo: 'Excel' };
   state.uploadHistory.unshift(_wrBatch);
@@ -3211,7 +3211,7 @@ function parseCarbon(wb) {
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   const prevCarbon = state.carbon.filter(r => !r._demo);
   state.carbon = [...prevCarbon, ...parsed];
-  const _cBid = Date.now();
+  const _cBid = new Date().toISOString();
   parsed.forEach(r => r._batchId = _cBid);
   const _cBatch = { id: _cBid, modulo: 'carbono', registros: parsed.length, total: state.carbon.length, fecha: new Date(), archivo: 'Excel' };
   state.uploadHistory.unshift(_cBatch);
@@ -4204,10 +4204,18 @@ Esta acción borrará los datos de la base de datos y no se puede deshacer.`)) r
     const tabla = tablaMap[modulo];
 
     if (tabla) {
-      // Borrar por rango de tiempo (created_at dentro de ±5 minutos del batch_tag timestamp)
-      const t = new Date(batchTag);
-      const desde = new Date(t.getTime() - 5 * 60000).toISOString();
-      const hasta  = new Date(t.getTime() + 5 * 60000).toISOString();
+      // El batch_tag es un ISO string — calcular rango ±10 minutos
+      let tMs;
+      // Puede ser ISO string o número legacy
+      if (isNaN(batchTag)) {
+        tMs = new Date(batchTag).getTime();
+      } else {
+        tMs = parseInt(batchTag);
+      }
+      if (isNaN(tMs)) throw new Error('Invalid time value: ' + batchTag);
+
+      const desde = new Date(tMs - 10 * 60000).toISOString();
+      const hasta  = new Date(tMs + 10 * 60000).toISOString();
       const { error: eData } = await db.from(tabla)
         .delete()
         .gte('created_at', desde)
