@@ -2669,17 +2669,19 @@ input, select { font-family: inherit; color: inherit; }
 
       <!-- ============= DATOS ============= -->
       <section class="view" id="view-data">
-        <div class="panel">
+
+        <!-- Resumen actual en memoria -->
+        <div class="panel" style="margin-bottom:16px">
           <div class="panel-header">
             <div>
-              <div class="panel-eyebrow">Sistema</div>
-              <div class="panel-title">Datos cargados</div>
-              <div class="panel-sub">Gestión de registros en memoria · Real vs Demo</div>
+              <div class="panel-eyebrow">En memoria ahora</div>
+              <div class="panel-title">Resumen de datos</div>
+              <div class="panel-sub">Registros activos en la sesión actual</div>
             </div>
             <div class="panel-actions">
               <button class="btn" id="btn-clear-demo" style="color:var(--warning);border-color:var(--warning)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
-                Quitar solo demo
+                Quitar demo
               </button>
               <button class="btn btn-danger" id="btn-clear-data">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg>
@@ -2689,6 +2691,28 @@ input, select { font-family: inherit; color: inherit; }
           </div>
           <div id="data-summary"></div>
         </div>
+
+        <!-- Historial de cargas masivas -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-eyebrow">Base de datos · Supabase</div>
+              <div class="panel-title">Historial de cargas masivas</div>
+              <div class="panel-sub">Archivos Excel subidos · puedes eliminar un lote completo</div>
+            </div>
+            <button class="btn" id="btn-refresh-history" style="flex-shrink:0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
+              Actualizar
+            </button>
+          </div>
+          <div id="upload-history-wrap">
+            <div style="text-align:center;padding:32px;color:var(--text-muted)">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px;display:block;opacity:.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Cargando historial…
+            </div>
+          </div>
+        </div>
+
       </section>
     </div>
   </main>
@@ -2926,7 +2950,7 @@ function switchView(view) {
   if (view === 'waste')   renderWaste();
   if (view === 'carbon')  renderCarbon();
   if (view === 'factors') renderFactors();
-  if (view === 'data')    renderDataSummary();
+  if (view === 'data')    { renderDataSummary(); renderUploadHistory(); }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -3022,6 +3046,7 @@ function parseWater(wb) {
   parsed.forEach(r => r._batchId = _wBid);
   const _wBatch = { id: _wBid, modulo: 'agua', registros: parsed.length, total: state.water.length, fecha: new Date(), archivo: wb.SheetNames[0] };
   state.uploadHistory.unshift(_wBatch);
+  sbRegistrarLote(_wBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.water.length} total en memoria`);
   sbGuardarLoteAgua(parsed);
   renderWater();
@@ -3141,6 +3166,7 @@ function parseWaste(wb) {
   parsed.forEach(r => r._batchId = _wrBid);
   const _wrBatch = { id: _wrBid, modulo: 'residuos', registros: parsed.length, total: state.waste.length, fecha: new Date(), archivo: 'Excel' };
   state.uploadHistory.unshift(_wrBatch);
+  sbRegistrarLote(_wrBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.waste.length} total en memoria`);
   sbGuardarLoteResiduos(parsed);
   renderWaste();
@@ -3183,6 +3209,7 @@ function parseCarbon(wb) {
   parsed.forEach(r => r._batchId = _cBid);
   const _cBatch = { id: _cBid, modulo: 'carbono', registros: parsed.length, total: state.carbon.length, fecha: new Date(), archivo: 'Excel' };
   state.uploadHistory.unshift(_cBatch);
+  sbRegistrarLote(_cBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.carbon.length} total en memoria`);
   sbGuardarLoteCarbon(parsed);
   renderCarbon();
@@ -4073,49 +4100,6 @@ document.getElementById('btn-goto-factors').addEventListener('click', () => swit
    DATOS
    ============================================================ */
 function renderDataSummary() {
-  /* Historial de cargas debajo del resumen */
-  function renderHistorial() {
-    if (!state.uploadHistory?.length) return `
-      <div style="text-align:center;padding:24px 16px;color:var(--text-muted);font-size:13px;border:1px dashed var(--border);border-radius:var(--r-sm);margin-top:16px">
-        Sin historial de cargas en esta sesión
-      </div>`;
-
-    const iconos = { agua:'💧', residuos:'🗑️', carbono:'☁️' };
-    const colores = { agua:'var(--water)', residuos:'var(--waste)', carbono:'var(--carbon)' };
-
-    return `
-      <div style="margin-top:20px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:10px">
-          Historial de cargas (sesión actual)
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${state.uploadHistory.map(b => `
-            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);
-                        padding:12px 16px;display:flex;align-items:center;gap:12px">
-              <div style="font-size:20px;flex-shrink:0">${iconos[b.modulo] || '📄'}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:700;color:var(--ink)">
-                  ${b.registros} registros de ${b.modulo}
-                </div>
-                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
-                  ${b.fecha.toLocaleString('es-BO',{dateStyle:'short',timeStyle:'short'})} · 
-                  Total en sistema: <strong style="color:${colores[b.modulo]}">${b.total}</strong>
-                </div>
-              </div>
-              <button onclick="eliminarLote(${b.id})"
-                style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);
-                       color:var(--danger);border-radius:var(--r-xs);padding:5px 11px;
-                       font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font);
-                       white-space:nowrap;transition:all .15s"
-                onmouseover="this.style.background='rgba(220,38,38,.15)'"
-                onmouseout="this.style.background='rgba(220,38,38,.08)'">
-                🗑 Eliminar lote
-              </button>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }
-
   const c = document.getElementById('data-summary');
   const C = getC();
 
@@ -4124,166 +4108,215 @@ function renderDataSummary() {
     waste:  { real: state.waste.filter(r=>!r._demo).length,  demo: state.waste.filter(r=>r._demo).length  },
     carbon: { real: state.carbon.filter(r=>!r._demo).length, demo: state.carbon.filter(r=>r._demo).length },
   };
-
-  const hayDemo  = counts.water.demo + counts.waste.demo + counts.carbon.demo > 0;
-  const hayReales= counts.water.real + counts.waste.real + counts.carbon.real > 0;
+  const hayDemo   = counts.water.demo + counts.waste.demo + counts.carbon.demo > 0;
+  const hayReales = counts.water.real + counts.waste.real + counts.carbon.real > 0;
 
   const mkRow = (label, color, rc, dc) => `
     <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:16px;
-                padding:14px 16px;border-bottom:1px solid var(--border);">
+                padding:13px 16px;border-bottom:1px solid var(--border)">
       <div style="font-weight:600;color:var(--ink);font-size:13.5px">${label}</div>
       <div style="text-align:right">
         <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${color}">${rc}</div>
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Registros reales</div>
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:1px">Reales</div>
       </div>
-      <div style="text-align:right;min-width:90px">
+      <div style="text-align:right;min-width:80px">
         <div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--warning)">${dc}</div>
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Registros demo</div>
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:1px">Demo</div>
       </div>
     </div>`;
 
   c.innerHTML = `
-    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px">
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:16px;padding:10px 16px;
-                  background:var(--bg-warm);border-bottom:1px solid var(--border);">
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:16px;padding:9px 16px;
+                  background:var(--bg-warm);border-bottom:1px solid var(--border)">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted)">Módulo</div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);text-align:right">Reales</div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--warning);text-align:right;min-width:90px">Demo</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--warning);text-align:right;min-width:80px">Demo</div>
       </div>
-      ${mkRow('💧 Huella Hídrica',  C.water,  counts.water.real,  counts.water.demo)}
+      ${mkRow('💧 Huella Hídrica',   C.water,  counts.water.real,  counts.water.demo)}
       ${mkRow('🗑️ Gestión Residuos', C.waste,  counts.waste.real,  counts.waste.demo)}
       ${mkRow('☁️ Huella Carbono',   C.carbon, counts.carbon.real, counts.carbon.demo)}
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:16px;padding:12px 16px;
-                  background:var(--bg-warm);">
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:16px;padding:11px 16px;background:var(--bg-warm)">
         <div style="font-weight:700;color:var(--ink)">Total</div>
         <div style="text-align:right;font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--green-600)">
           ${counts.water.real + counts.waste.real + counts.carbon.real}
         </div>
-        <div style="text-align:right;font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--warning);min-width:90px">
+        <div style="text-align:right;font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--warning);min-width:80px">
           ${counts.water.demo + counts.waste.demo + counts.carbon.demo}
         </div>
       </div>
     </div>
-
-    ${!hayReales && !hayDemo ? `
-      <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
-        No hay datos cargados. Carga un archivo Excel o usa los datos demo.
-      </div>` : ''}
-
-    ${hayDemo ? `
-      <div style="padding:12px 16px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);
-                  border-radius:var(--r-sm);display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--warning);font-weight:500">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/>
-        </svg>
-        Tienes datos demo activos. Usa <b style="margin:0 4px">"Quitar solo demo"</b> para eliminarlos sin afectar tus datos reales.
-      </div>` : ''}
-
-    ${hayReales && !hayDemo ? `
-      <div style="padding:12px 16px;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.25);
-                  border-radius:var(--r-sm);display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--success);font-weight:500">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-        Solo tienes datos reales. Sin datos demo activos.
-      </div>` : ''}
-    ${renderHistorial()}`;
+    ${!hayReales && !hayDemo ? `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Sin datos en memoria. Carga un Excel o usa datos demo.</div>` : ''}
+    ${hayDemo ? `<div style="padding:10px 14px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-radius:var(--r-sm);font-size:12.5px;color:var(--warning);font-weight:500">⚠️ Tienes datos demo. Usa "Quitar demo" para eliminarlos sin afectar datos reales.</div>` : ''}
+    ${hayReales && !hayDemo ? `<div style="padding:10px 14px;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.25);border-radius:var(--r-sm);font-size:12.5px;color:var(--success);font-weight:500">✓ Solo tienes datos reales cargados.</div>` : ''}`;
 }
 
-document.getElementById('btn-clear-demo')?.addEventListener('click', () => {
-  const demoW = state.water.filter(r=>r._demo).length;
-  const demoWr = state.waste.filter(r=>r._demo).length;
-  const demoC = state.carbon.filter(r=>r._demo).length;
-  const total = demoW + demoWr + demoC;
+/* ============================================================
+   HISTORIAL DE CARGAS — persiste en Supabase
+   ============================================================ */
 
-  if (total === 0) {
-    toast('Sin datos demo', 'No hay datos demo que eliminar', 'warning');
+/* Guardar un lote en la tabla upload_batches de Supabase */
+async function sbRegistrarLote(batch) {
+  try {
+    await db.from('upload_batches').insert({
+      modulo:     batch.modulo,
+      registros:  batch.registros,
+      fecha_carga: batch.fecha.toISOString(),
+      batch_tag:  batch.id,   // timestamp usado como tag para filtrar al borrar
+    });
+  } catch(e) { console.warn('sbRegistrarLote:', e.message); }
+}
+
+/* Cargar historial desde Supabase */
+async function sbCargarHistorial() {
+  try {
+    const { data, error } = await db.from('upload_batches')
+      .select('*').order('fecha_carga', { ascending: false }).limit(100);
+    if (error) throw error;
+    return data || [];
+  } catch(e) {
+    console.warn('sbCargarHistorial:', e.message);
+    return [];
+  }
+}
+
+/* Eliminar un lote: borra registros de la tabla correspondiente Y de upload_batches */
+async function eliminarLote(batchTag, modulo) {
+  const moduloLabel = { agua: 'Huella Hídrica', residuos: 'Gestión Residuos', carbono: 'Huella Carbono' }[modulo] || modulo;
+
+  if (!confirm(`¿Eliminar permanentemente todos los registros de "${moduloLabel}" cargados en este lote?
+
+Esta acción borrará los datos de la base de datos y no se puede deshacer.`)) return;
+
+  // Mostrar loading en el botón
+  const btn = document.getElementById(`btn-del-${batchTag}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Eliminando…'; }
+
+  try {
+    // Borrar registros de la tabla de datos según módulo
+    const tablaMap = { agua: 'water_readings', residuos: 'waste_records', carbono: 'carbon_records' };
+    const tabla = tablaMap[modulo];
+
+    if (tabla) {
+      // Borrar por rango de tiempo (created_at dentro de ±5 minutos del batch_tag timestamp)
+      const t = new Date(batchTag);
+      const desde = new Date(t.getTime() - 5 * 60000).toISOString();
+      const hasta  = new Date(t.getTime() + 5 * 60000).toISOString();
+      const { error: eData } = await db.from(tabla)
+        .delete()
+        .gte('created_at', desde)
+        .lte('created_at', hasta);
+      if (eData) throw new Error(eData.message);
+    }
+
+    // Borrar el registro del historial
+    const { error: eHist } = await db.from('upload_batches').delete().eq('batch_tag', batchTag);
+    if (eHist) throw new Error(eHist.message);
+
+    // Actualizar memoria: quitar registros con _batchId que corresponda
+    if (modulo === 'agua')     state.water  = state.water.filter(r  => String(r._batchId) !== String(batchTag));
+    if (modulo === 'residuos') state.waste  = state.waste.filter(r  => String(r._batchId) !== String(batchTag));
+    if (modulo === 'carbono')  state.carbon = state.carbon.filter(r => String(r._batchId) !== String(batchTag));
+
+    toast('Lote eliminado', `Registros de ${moduloLabel} eliminados de la base de datos`);
+    updateNavCounts(); updateHomeStats(); renderDataSummary();
+    renderHome();
+    if (state.currentView === 'water')  renderWater();
+    if (state.currentView === 'waste')  renderWaste();
+    if (state.currentView === 'carbon') renderCarbon();
+    refreshDropdownsAll();
+
+    // Recargar el historial
+    await renderUploadHistory();
+
+  } catch(e) {
+    toast('Error', 'No se pudo eliminar el lote: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 Eliminar'; }
+  }
+}
+
+/* Renderizar el historial en pantalla */
+async function renderUploadHistory() {
+  const wrap = document.getElementById('upload-history-wrap');
+  if (!wrap) return;
+
+  wrap.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-4px;margin-right:6px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+    Cargando historial…</div>`;
+
+  const lotes = await sbCargarHistorial();
+
+  if (!lotes.length) {
+    wrap.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--text-muted)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 12px;opacity:.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Sin cargas masivas registradas</div>
+        <div style="font-size:12.5px">Los archivos Excel que subas aparecerán aquí</div>
+      </div>`;
     return;
   }
 
-  if (!confirm(`¿Quitar solo los ${total} registros demo?\n\nTus datos reales quedarán intactos.`)) return;
+  const iconos  = { agua:'💧', residuos:'🗑️', carbono:'☁️' };
+  const colores = { agua:'var(--water)', residuos:'var(--waste)', carbono:'var(--carbon)' };
+  const labels  = { agua:'Huella Hídrica', residuos:'Gestión Residuos', carbono:'Huella Carbono' };
 
-  state.water  = state.water.filter(r => !r._demo);
-  state.waste  = state.waste.filter(r => !r._demo);
-  state.carbon = state.carbon.filter(r => !r._demo);
+  // Agrupar por fecha de carga (día)
+  const grupos = {};
+  lotes.forEach(l => {
+    const dia = new Date(l.fecha_carga).toLocaleDateString('es-BO', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+    if (!grupos[dia]) grupos[dia] = [];
+    grupos[dia].push(l);
+  });
 
-  toast('Demo eliminado', `${total} registros demo quitados · tus datos reales están intactos`);
-  updateNavCounts();
-  updateHomeStats();
-  renderDataSummary();
-  renderHome();
-  if (state.currentView === 'water')  renderWater();
-  if (state.currentView === 'waste')  renderWaste();
-  if (state.currentView === 'carbon') renderCarbon();
-  refreshDropdownsAll();
-});
+  let html = '';
+  for (const [dia, items] of Object.entries(grupos)) {
+    html += `
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+                    color:var(--text-muted);padding:8px 0 10px;border-bottom:1px solid var(--border);
+                    margin-bottom:10px">${dia}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">`;
 
-document.getElementById('btn-clear-data').addEventListener('click', async () => {
-  const hayDemo  = state.water.some(r=>r._demo) || state.waste.some(r=>r._demo) || state.carbon.some(r=>r._demo);
-  const hayReales= state.water.some(r=>!r._demo) || state.waste.some(r=>!r._demo) || state.carbon.some(r=>!r._demo);
+    items.forEach(l => {
+      const hora = new Date(l.fecha_carga).toLocaleTimeString('es-BO', { hour:'2-digit', minute:'2-digit' });
+      const color = colores[l.modulo] || 'var(--text-dim)';
+      const label = labels[l.modulo] || l.modulo;
+      const icono = iconos[l.modulo] || '📄';
 
-  let msg = '¿Eliminar TODOS los datos cargados?\n\n';
-  if (hayReales && hayDemo) msg += '⚠️ Esto borrará tanto tus datos reales como los demo en memoria y en la base de datos.';
-  else if (hayReales) msg += 'Esto borrará todos tus datos reales de memoria y de Supabase.';
-  else msg += 'Esto borrará los datos demo.';
+      html += `
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);
+                    padding:14px 16px;display:flex;align-items:center;gap:14px">
+          <div style="font-size:22px;flex-shrink:0">${icono}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${label}</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:3px;flex-wrap:wrap">
+              <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${color}">${l.registros.toLocaleString('es-BO')}</span>
+              <span style="font-size:11.5px;color:var(--text-muted)">registros</span>
+              <span style="font-size:11px;color:var(--text-muted);background:var(--bg-warm);
+                           border:1px solid var(--border);border-radius:4px;padding:1px 6px">${hora}</span>
+            </div>
+          </div>
+          <button id="btn-del-${l.batch_tag}"
+            onclick="eliminarLote('${l.batch_tag}', '${l.modulo}')"
+            style="background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);
+                   color:var(--danger);border-radius:var(--r-xs);padding:7px 14px;
+                   font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+                   white-space:nowrap;transition:all .15s;flex-shrink:0"
+            onmouseover="this.style.background='rgba(220,38,38,.15)'"
+            onmouseout="this.style.background='rgba(220,38,38,.07)'">
+            🗑 Eliminar
+          </button>
+        </div>`;
+    });
 
-  if (!confirm(msg)) return;
-
-  // Borrar de Supabase (solo datos reales, no demo — los demo solo existen en memoria)
-  if (hayReales) {
-    try {
-      await Promise.all([
-        db.from('water_readings').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-        db.from('waste_records').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-        db.from('carbon_records').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-      ]);
-    } catch(e) { console.warn('Error al borrar de Supabase:', e.message); }
+    html += `</div></div>`;
   }
 
-  // Borrar de memoria
-  state.water = []; state.waste = []; state.carbon = [];
-  // Limpiar historial de cargas
-  state.uploadHistory = [];
-  Object.values(state.charts).forEach(ch => ch.destroy());
-  state.charts = {};
-  toast('Datos eliminados', 'Todos los registros fueron limpiados de memoria y base de datos');
-  updateNavCounts();
-  updateHomeStats();
-  renderDataSummary();
-  renderHome();
-  if (state.currentView === 'water')  renderWater();
-  if (state.currentView === 'waste')  renderWaste();
-  if (state.currentView === 'carbon') renderCarbon();
-  refreshDropdownsAll();
-});
-
-async function eliminarLote(batchId) {
-  const batch = state.uploadHistory.find(b => b.id === batchId);
-  if (!batch) return;
-
-  if (!confirm(`¿Eliminar los ${batch.registros} registros de ${batch.modulo} cargados el ${batch.fecha.toLocaleString('es-BO',{dateStyle:'short',timeStyle:'short'})}?
-
-Esta acción no se puede deshacer.`)) return;
-
-  // Identificar registros por el _batchId que les asignamos
-  if (batch.modulo === 'agua') {
-    state.water = state.water.filter(r => r._batchId !== batchId);
-  } else if (batch.modulo === 'residuos') {
-    state.waste = state.waste.filter(r => r._batchId !== batchId);
-  } else if (batch.modulo === 'carbono') {
-    state.carbon = state.carbon.filter(r => r._batchId !== batchId);
-  }
-
-  // Remover del historial
-  state.uploadHistory = state.uploadHistory.filter(b => b.id !== batchId);
-
-  toast('Lote eliminado', `${batch.registros} registros de ${batch.modulo} eliminados de la sesión`);
-  updateNavCounts();
-  updateHomeStats();
-  renderDataSummary();
-  renderHome();
-  refreshDropdownsAll();
+  wrap.innerHTML = html;
 }
+
+/* Botón actualizar historial */
+document.getElementById('btn-refresh-history')?.addEventListener('click', renderUploadHistory);
 
 function updateNavCounts() {
   document.getElementById('nav-water-count').textContent = state.water.length || '';
@@ -4497,6 +4530,9 @@ function init() {
 
   // Cargar datos guardados desde Supabase
   sbCargarTodo();
+
+  // Cargar historial si la vista inicial es datos
+  if (state.currentView === 'data') renderUploadHistory();
 }
 /* ============================================================
    FORMULARIOS DE INGRESO MANUAL
