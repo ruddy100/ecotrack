@@ -129,16 +129,33 @@ async function sbGuardarLoteCarbon(registros) {
   }
 }
 
+/* Carga todos los registros de una tabla con paginación (supera límite de 1000) */
+async function sbCargarPaginado(tabla, orden1='fecha', orden2='created_at') {
+  const PAGE = 1000;
+  let todos = [], desde = 0, continuar = true;
+  while (continuar) {
+    const { data, error } = await db.from(tabla).select('*')
+      .order(orden1).order(orden2)
+      .range(desde, desde + PAGE - 1);
+    if (error) throw new Error(error.message);
+    if (data?.length) todos = todos.concat(data);
+    continuar = data?.length === PAGE;
+    desde += PAGE;
+  }
+  return todos;
+}
+
 async function sbCargarTodo() {
   const chip = document.getElementById('meta-supabase');
   try {
-    const [{ data: w, error: eW }, { data: wr, error: eWr }, { data: c, error: eC }] = await Promise.all([
-      db.from('water_readings').select('*').order('fecha').order('created_at'),
-      db.from('waste_records').select('*').order('fecha').order('created_at'),
-      db.from('carbon_records').select('*').order('fecha').order('created_at'),
+    const [w, wr, c] = await Promise.all([
+      sbCargarPaginado('water_readings'),
+      sbCargarPaginado('waste_records'),
+      sbCargarPaginado('carbon_records'),
     ]);
+    const eW = null, eWr = null, eC = null;
 
-    if (eW || eWr || eC) throw new Error(eW?.message || eWr?.message || eC?.message);
+    if (eW || eWr || eC) throw new Error('Error de carga');
 
     if (w?.length) {
       state.water = w.map(r => ({
@@ -2752,6 +2769,8 @@ input, select { font-family: inherit; color: inherit; }
    ESTADO GLOBAL
    ============================================================ */
 const state = {
+  uploadHistory: [],  // historial de lotes cargados
+
   water: [], waste: [], carbon: [],
   factors: {},
   filters: {
@@ -2999,6 +3018,10 @@ function parseWater(wb) {
   // Acumular: mantener datos previos (no demo) + nuevos del Excel
   const prevWater = state.water.filter(r => !r._demo);
   state.water = [...prevWater, ...parsed];
+  const _wBid = Date.now();
+  parsed.forEach(r => r._batchId = _wBid);
+  const _wBatch = { id: _wBid, modulo: 'agua', registros: parsed.length, total: state.water.length, fecha: new Date(), archivo: wb.SheetNames[0] };
+  state.uploadHistory.unshift(_wBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.water.length} total en memoria`);
   sbGuardarLoteAgua(parsed);
   renderWater();
@@ -3114,6 +3137,10 @@ function parseWaste(wb) {
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   const prevWaste = state.waste.filter(r => !r._demo);
   state.waste = [...prevWaste, ...parsed];
+  const _wrBid = Date.now();
+  parsed.forEach(r => r._batchId = _wrBid);
+  const _wrBatch = { id: _wrBid, modulo: 'residuos', registros: parsed.length, total: state.waste.length, fecha: new Date(), archivo: 'Excel' };
+  state.uploadHistory.unshift(_wrBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.waste.length} total en memoria`);
   sbGuardarLoteResiduos(parsed);
   renderWaste();
@@ -3152,6 +3179,10 @@ function parseCarbon(wb) {
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
   const prevCarbon = state.carbon.filter(r => !r._demo);
   state.carbon = [...prevCarbon, ...parsed];
+  const _cBid = Date.now();
+  parsed.forEach(r => r._batchId = _cBid);
+  const _cBatch = { id: _cBid, modulo: 'carbono', registros: parsed.length, total: state.carbon.length, fecha: new Date(), archivo: 'Excel' };
+  state.uploadHistory.unshift(_cBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.carbon.length} total en memoria`);
   sbGuardarLoteCarbon(parsed);
   renderCarbon();
@@ -4042,6 +4073,49 @@ document.getElementById('btn-goto-factors').addEventListener('click', () => swit
    DATOS
    ============================================================ */
 function renderDataSummary() {
+  /* Historial de cargas debajo del resumen */
+  function renderHistorial() {
+    if (!state.uploadHistory?.length) return `
+      <div style="text-align:center;padding:24px 16px;color:var(--text-muted);font-size:13px;border:1px dashed var(--border);border-radius:var(--r-sm);margin-top:16px">
+        Sin historial de cargas en esta sesión
+      </div>`;
+
+    const iconos = { agua:'💧', residuos:'🗑️', carbono:'☁️' };
+    const colores = { agua:'var(--water)', residuos:'var(--waste)', carbono:'var(--carbon)' };
+
+    return `
+      <div style="margin-top:20px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:10px">
+          Historial de cargas (sesión actual)
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${state.uploadHistory.map(b => `
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);
+                        padding:12px 16px;display:flex;align-items:center;gap:12px">
+              <div style="font-size:20px;flex-shrink:0">${iconos[b.modulo] || '📄'}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;color:var(--ink)">
+                  ${b.registros} registros de ${b.modulo}
+                </div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                  ${b.fecha.toLocaleString('es-BO',{dateStyle:'short',timeStyle:'short'})} · 
+                  Total en sistema: <strong style="color:${colores[b.modulo]}">${b.total}</strong>
+                </div>
+              </div>
+              <button onclick="eliminarLote(${b.id})"
+                style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);
+                       color:var(--danger);border-radius:var(--r-xs);padding:5px 11px;
+                       font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font);
+                       white-space:nowrap;transition:all .15s"
+                onmouseover="this.style.background='rgba(220,38,38,.15)'"
+                onmouseout="this.style.background='rgba(220,38,38,.08)'">
+                🗑 Eliminar lote
+              </button>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
   const c = document.getElementById('data-summary');
   const C = getC();
 
@@ -4112,7 +4186,8 @@ function renderDataSummary() {
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
         Solo tienes datos reales. Sin datos demo activos.
-      </div>` : ''}`;
+      </div>` : ''}
+    ${renderHistorial()}`;
 }
 
 document.getElementById('btn-clear-demo')?.addEventListener('click', () => {
@@ -4143,21 +4218,35 @@ document.getElementById('btn-clear-demo')?.addEventListener('click', () => {
   refreshDropdownsAll();
 });
 
-document.getElementById('btn-clear-data').addEventListener('click', () => {
+document.getElementById('btn-clear-data').addEventListener('click', async () => {
   const hayDemo  = state.water.some(r=>r._demo) || state.waste.some(r=>r._demo) || state.carbon.some(r=>r._demo);
   const hayReales= state.water.some(r=>!r._demo) || state.waste.some(r=>!r._demo) || state.carbon.some(r=>!r._demo);
 
   let msg = '¿Eliminar TODOS los datos cargados?\n\n';
-  if (hayReales && hayDemo) msg += '⚠️ Esto borrará tanto tus datos reales como los demo.\nUsa "Quitar solo demo" si quieres conservar tus datos reales.';
-  else if (hayReales) msg += 'Esto borrará todos tus datos reales.';
+  if (hayReales && hayDemo) msg += '⚠️ Esto borrará tanto tus datos reales como los demo en memoria y en la base de datos.';
+  else if (hayReales) msg += 'Esto borrará todos tus datos reales de memoria y de Supabase.';
   else msg += 'Esto borrará los datos demo.';
 
   if (!confirm(msg)) return;
 
+  // Borrar de Supabase (solo datos reales, no demo — los demo solo existen en memoria)
+  if (hayReales) {
+    try {
+      await Promise.all([
+        db.from('water_readings').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        db.from('waste_records').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        db.from('carbon_records').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+      ]);
+    } catch(e) { console.warn('Error al borrar de Supabase:', e.message); }
+  }
+
+  // Borrar de memoria
   state.water = []; state.waste = []; state.carbon = [];
+  // Limpiar historial de cargas
+  state.uploadHistory = [];
   Object.values(state.charts).forEach(ch => ch.destroy());
   state.charts = {};
-  toast('Datos eliminados', 'Todos los registros fueron limpiados');
+  toast('Datos eliminados', 'Todos los registros fueron limpiados de memoria y base de datos');
   updateNavCounts();
   updateHomeStats();
   renderDataSummary();
@@ -4167,6 +4256,34 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
   if (state.currentView === 'carbon') renderCarbon();
   refreshDropdownsAll();
 });
+
+async function eliminarLote(batchId) {
+  const batch = state.uploadHistory.find(b => b.id === batchId);
+  if (!batch) return;
+
+  if (!confirm(`¿Eliminar los ${batch.registros} registros de ${batch.modulo} cargados el ${batch.fecha.toLocaleString('es-BO',{dateStyle:'short',timeStyle:'short'})}?
+
+Esta acción no se puede deshacer.`)) return;
+
+  // Identificar registros por el _batchId que les asignamos
+  if (batch.modulo === 'agua') {
+    state.water = state.water.filter(r => r._batchId !== batchId);
+  } else if (batch.modulo === 'residuos') {
+    state.waste = state.waste.filter(r => r._batchId !== batchId);
+  } else if (batch.modulo === 'carbono') {
+    state.carbon = state.carbon.filter(r => r._batchId !== batchId);
+  }
+
+  // Remover del historial
+  state.uploadHistory = state.uploadHistory.filter(b => b.id !== batchId);
+
+  toast('Lote eliminado', `${batch.registros} registros de ${batch.modulo} eliminados de la sesión`);
+  updateNavCounts();
+  updateHomeStats();
+  renderDataSummary();
+  renderHome();
+  refreshDropdownsAll();
+}
 
 function updateNavCounts() {
   document.getElementById('nav-water-count').textContent = state.water.length || '';
@@ -5501,18 +5618,34 @@ function parsearLecturaMedidor(raw) {
   if (!raw || raw.trim() === '') return NaN;
   let v = raw.trim();
 
-  // Si ya tiene coma → reemplazar por punto y convertir
+  // Caso 1: tiene COMA y PUNTO → formato boliviano/europeo (punto=miles, coma=decimal)
+  // Ej: 7.336,06 → 7336.06 | 10.234,50 → 10234.50
+  if (v.includes(',') && v.includes('.')) {
+    return parseFloat(v.replace(/\./g, '').replace(',', '.'));
+  }
+
+  // Caso 2: solo COMA → coma es decimal
+  // Ej: 6885,60 → 6885.60 | 9815,20 → 9815.20
   if (v.includes(',')) {
     return parseFloat(v.replace(',', '.'));
   }
 
-  // Si tiene punto → ya es decimal normal
+  // Caso 3: solo PUNTO
+  // Si la parte decimal tiene exactamente 3 dígitos → punto es separador de miles
+  // Ej: 7.337 → 7337 | 10.234 → 10234
+  // Si tiene otro número de decimales → punto es decimal normal
+  // Ej: 9815.20 → 9815.20 | 7.5 → 7.5
   if (v.includes('.')) {
-    return parseFloat(v);
+    const partes = v.split('.');
+    if (partes.length === 2 && partes[1].length === 3) {
+      return parseFloat(v.replace('.', ''));  // punto = miles
+    }
+    return parseFloat(v);  // punto = decimal
   }
 
-  // Solo dígitos → insertar coma antes de los últimos 2
-  const digits = v.replace(/\D/g, '');
+  // Caso 4: solo dígitos → últimos 2 son litros (regla del medidor de 6 dígitos)
+  // Ej: 688560 → 6885.60 | 733706 → 7337.06 | 449 → 4.49
+  const digits = v.replace(/[^0-9]/g, '');
   if (digits.length < 2) return parseFloat(digits);
   const entero = digits.slice(0, -2) || '0';
   const dec    = digits.slice(-2);
