@@ -25,7 +25,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 /* ── Helpers de sincronización ── */
 async function sbGuardarAgua(r) {
   try {
-    await db.from('water_readings').insert({
+    await db.from('water_readings').upsert({
       fecha:            r.fecha instanceof Date ? r.fecha.toISOString().slice(0,10) : r.fecha,
       sucursal:         r.sucursal,
       medidor:          r.medidor,
@@ -84,8 +84,10 @@ async function sbGuardarLoteAgua(registros) {
   const CHUNK = 500;
   for (let i = 0; i < rows.length; i += CHUNK) {
     const chunk = rows.slice(i, i + CHUNK);
-    try { await db.from('water_readings').insert(chunk); }
-    catch(e) { console.warn(`Supabase lote agua chunk ${i}-${i+CHUNK}:`, e.message); }
+    try {
+      await db.from('water_readings')
+        .upsert(chunk, { onConflict: 'fecha,medidor,sucursal', ignoreDuplicates: false });
+    } catch(e) { console.warn(`Supabase lote agua chunk ${i}-${i+CHUNK}:`, e.message); }
   }
 }
 
@@ -104,8 +106,10 @@ async function sbGuardarLoteResiduos(registros) {
   const CHUNK = 500;
   for (let i = 0; i < rows.length; i += CHUNK) {
     const chunk = rows.slice(i, i + CHUNK);
-    try { await db.from('waste_records').insert(chunk); }
-    catch(e) { console.warn(`Supabase lote residuos chunk ${i}-${i+CHUNK}:`, e.message); }
+    try {
+      await db.from('waste_records')
+        .upsert(chunk, { onConflict: 'fecha,planta,subcategoria', ignoreDuplicates: false });
+    } catch(e) { console.warn(`Supabase lote residuos chunk ${i}-${i+CHUNK}:`, e.message); }
   }
 }
 
@@ -124,8 +128,10 @@ async function sbGuardarLoteCarbon(registros) {
   const CHUNK = 500;
   for (let i = 0; i < rows.length; i += CHUNK) {
     const chunk = rows.slice(i, i + CHUNK);
-    try { await db.from('carbon_records').insert(chunk); }
-    catch(e) { console.warn(`Supabase lote carbono chunk ${i}-${i+CHUNK}:`, e.message); }
+    try {
+      await db.from('carbon_records')
+        .upsert(chunk, { onConflict: 'fecha,planta,subcategoria', ignoreDuplicates: false });
+    } catch(e) { console.warn(`Supabase lote carbono chunk ${i}-${i+CHUNK}:`, e.message); }
   }
 }
 
