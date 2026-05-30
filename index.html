@@ -3011,7 +3011,7 @@ function getCol(row, ...candidates) {
   return undefined;
 }
 
-async function parseWater(wb) {
+function parseWater(wb) {
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
   const parsed = [];
@@ -3054,18 +3054,18 @@ async function parseWater(wb) {
   // Limpiar propiedades internas antes de guardar en state
   parsed.forEach(r => { delete r._lant_excel; delete r._consumo_excel; });
 
-  // Acumular: mantener datos previos (no demo) + nuevos del Excel
-  const prevWater = state.water.filter(r => !r._demo);
-  state.water = [...prevWater, ...parsed];
+  // batchId antes de acumular
   const _wBid = new Date().toISOString();
   parsed.forEach(r => r._batchId = _wBid);
+  // Acumular en memoria: datos previos reales + nuevos del Excel
+  const prevWater = state.water.filter(r => !r._demo);
+  state.water = [...prevWater, ...parsed];
   const _wBatch = { id: _wBid, modulo: 'agua', registros: parsed.length, total: state.water.length, fecha: new Date(), archivo: wb.SheetNames[0] };
   state.uploadHistory.unshift(_wBatch);
   sbRegistrarLote(_wBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.water.length} total en memoria`);
-  await sbGuardarLoteAgua(parsed);
-  // Recargar desde Supabase para mostrar el total real (incluyendo cargas anteriores)
-  await sbCargarTodo();
+  // Guardar en Supabase (NO recargar después — los datos ya están bien en memoria)
+  sbGuardarLoteAgua(parsed);
   renderWater();
   updateNavCounts();
   updateHomeStats();
@@ -3141,7 +3141,7 @@ function parseWasteLike(wb) {
   return best || XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: null });
 }
 
-async function parseWaste(wb) {
+function parseWaste(wb) {
   const rows = parseWasteLike(wb);
   const parsed = [];
   for (const r of rows) {
@@ -3178,16 +3178,15 @@ async function parseWaste(wb) {
     }
   }
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
-  const prevWaste = state.waste.filter(r => !r._demo);
-  state.waste = [...prevWaste, ...parsed];
   const _wrBid = new Date().toISOString();
   parsed.forEach(r => r._batchId = _wrBid);
+  const prevWaste = state.waste.filter(r => !r._demo);
+  state.waste = [...prevWaste, ...parsed];
   const _wrBatch = { id: _wrBid, modulo: 'residuos', registros: parsed.length, total: state.waste.length, fecha: new Date(), archivo: 'Excel' };
   state.uploadHistory.unshift(_wrBatch);
   sbRegistrarLote(_wrBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.waste.length} total en memoria`);
-  await sbGuardarLoteResiduos(parsed);
-  await sbCargarTodo();
+  sbGuardarLoteResiduos(parsed);
   renderWaste();
   updateNavCounts();
   updateHomeStats();
@@ -3197,7 +3196,7 @@ async function parseWaste(wb) {
   if (state.currentView === 'data') renderUploadHistory();
 }
 
-async function parseCarbon(wb) {
+function parseCarbon(wb) {
   const rows = parseWasteLike(wb);
   const parsed = [];
   for (const r of rows) {
@@ -3223,16 +3222,15 @@ async function parseCarbon(wb) {
     });
   }
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
-  const prevCarbon = state.carbon.filter(r => !r._demo);
-  state.carbon = [...prevCarbon, ...parsed];
   const _cBid = new Date().toISOString();
   parsed.forEach(r => r._batchId = _cBid);
+  const prevCarbon = state.carbon.filter(r => !r._demo);
+  state.carbon = [...prevCarbon, ...parsed];
   const _cBatch = { id: _cBid, modulo: 'carbono', registros: parsed.length, total: state.carbon.length, fecha: new Date(), archivo: 'Excel' };
   state.uploadHistory.unshift(_cBatch);
   sbRegistrarLote(_cBatch);
   toast('Datos cargados', `${parsed.length} nuevos registros · ${state.carbon.length} total en memoria`);
-  await sbGuardarLoteCarbon(parsed);
-  await sbCargarTodo();
+  sbGuardarLoteCarbon(parsed);
   renderCarbon();
   updateNavCounts();
   updateHomeStats();
