@@ -151,6 +151,46 @@ async function sbCargarPaginado(tabla, orden1='fecha', orden2='created_at') {
   return todos;
 }
 
+/* Mapear fila de BD a objeto interno */
+function _mapWater(r) {
+  return {
+    fecha:          new Date(r.fecha + 'T12:00:00'),
+    sucursal:       r.sucursal,
+    medidor:        r.medidor,
+    lectura_ant:    r.lectura_anterior,
+    lectura_act:    r.lectura_actual,
+    consumo:        r.consumo,
+    unidad:         r.unidad,
+    observacion:    r.observacion,
+    _consumo_excel: r.consumo,
+    _lant_excel:    r.lectura_anterior,
+  };
+}
+function _mapWaste(r) {
+  return {
+    fecha:        new Date(r.fecha + 'T12:00:00'),
+    planta:       r.planta,
+    categoria:    r.categoria,
+    subcategoria: r.subcategoria,
+    cantidad:     r.cantidad,
+    unidad:       r.unidad,
+    tipo:         r.tipo,
+    _reciclada:   (r.tipo === 'RECICLABLE' && !r.cantidad_reciclada) ? r.cantidad : (r.cantidad_reciclada || 0),
+  };
+}
+function _mapCarbon(r) {
+  return {
+    fecha:        new Date(r.fecha + 'T12:00:00'),
+    planta:       r.planta,
+    categoria:    r.categoria,
+    subcategoria: r.subcategoria,
+    cantidad:     r.cantidad,
+    unidad:       r.unidad,
+    factor:       r.factor,
+    tco2e:        r.tco2e,
+  };
+}
+
 async function sbCargarTodo() {
   const chip = document.getElementById('meta-supabase');
   try {
@@ -159,69 +199,38 @@ async function sbCargarTodo() {
       sbCargarPaginado('waste_records'),
       sbCargarPaginado('carbon_records'),
     ]);
-    const eW = null, eWr = null, eC = null;
 
-    if (eW || eWr || eC) throw new Error('Error de carga');
-
-    if (w?.length) {
-      state.water = w.map(r => ({
-        fecha:        new Date(r.fecha + 'T12:00:00'),
-        sucursal:     r.sucursal,
-        medidor:      r.medidor,
-        lectura_ant:  r.lectura_anterior,
-        lectura_act:  r.lectura_actual,
-        consumo:      r.consumo,
-        unidad:       r.unidad,
-        observacion:  r.observacion,
-        _consumo_excel: r.consumo,
-        _lant_excel:    r.lectura_anterior,
-      }));
-    }
-    if (wr?.length) {
-      state.waste = wr.map(r => ({
-        fecha:        new Date(r.fecha + 'T12:00:00'),
-        planta:       r.planta,
-        categoria:    r.categoria,
-        subcategoria: r.subcategoria,
-        cantidad:     r.cantidad,
-        unidad:       r.unidad,
-        tipo:         r.tipo,
-        // Si es RECICLABLE y no tiene cantidad_reciclada → 100%
-        _reciclada: (r.tipo === 'RECICLABLE' && !r.cantidad_reciclada)
-                    ? r.cantidad
-                    : (r.cantidad_reciclada || 0),
-      }));
-    }
-    if (c?.length) {
-      state.carbon = c.map(r => ({
-        fecha:        new Date(r.fecha + 'T12:00:00'),
-        planta:       r.planta,
-        categoria:    r.categoria,
-        subcategoria: r.subcategoria,
-        cantidad:     r.cantidad,
-        unidad:       r.unidad,
-        factor:       r.factor,
-        tco2e:        r.tco2e,
-      }));
-    }
-
-    // Actualizar chip de estado
     const total = (w?.length||0) + (wr?.length||0) + (c?.length||0);
+
+    // Actualizar chip siempre
     if (chip) {
       chip.textContent = `✓ BD conectada · ${total} registros`;
       chip.style.color = 'var(--success)';
     }
 
-    if (w?.length || wr?.length || c?.length) {
-      updateNavCounts();
-      updateHomeStats();
-      renderHome();
-      if (state.currentView === 'water')  renderWater();
-      if (state.currentView === 'waste')  renderWaste();
-      if (state.currentView === 'carbon') renderCarbon();
-      refreshDropdownsAll();
-      console.log(`✓ Supabase: ${w?.length||0} agua · ${wr?.length||0} residuos · ${c?.length||0} carbono`);
-    } else {
+    // Si state no existe aún (carga inicial antes de init()), guardar en buffer
+    if (typeof state === 'undefined') {
+      window._sbBuffer = { w, wr, c };
+      console.log(`✓ Supabase buffer: ${total} registros (state no listo aún)`);
+      return;
+    }
+
+    // Aplicar datos al state
+    if (w?.length)  state.water  = w.map(_mapWater);
+    if (wr?.length) state.waste  = wr.map(_mapWaste);
+    if (c?.length)  state.carbon = c.map(_mapCarbon);
+
+    // Refrescar UI
+    updateNavCounts();
+    updateHomeStats();
+    renderHome();
+    if (state.currentView === 'water')  renderWater();
+    if (state.currentView === 'waste')  renderWaste();
+    if (state.currentView === 'carbon') renderCarbon();
+    refreshDropdownsAll();
+    console.log(`✓ Supabase: ${w?.length||0} agua · ${wr?.length||0} residuos · ${c?.length||0} carbono`);
+
+    if (!total) {
       if (chip) { chip.textContent = '✓ BD conectada · vacía'; chip.style.color = 'var(--success)'; }
     }
   } catch(e) {
@@ -4549,8 +4558,25 @@ function init() {
   initFormWaste();
   initFormCarbon();
 
-  // Cargar datos guardados desde Supabase
-  sbCargarTodo();
+  // Aplicar buffer de Supabase si ya llegó antes de que init() corriera
+  if (window._sbBuffer) {
+    const { w, wr, c } = window._sbBuffer;
+    if (w?.length)  state.water  = w.map(_mapWater);
+    if (wr?.length) state.waste  = wr.map(_mapWaste);
+    if (c?.length)  state.carbon = c.map(_mapCarbon);
+    window._sbBuffer = null;
+    updateNavCounts();
+    updateHomeStats();
+    renderHome();
+    refreshDropdownsAll();
+    const chip = document.getElementById('meta-supabase');
+    const total = state.water.length + state.waste.length + state.carbon.length;
+    if (chip) { chip.textContent = `✓ BD conectada · ${total} registros`; chip.style.color = 'var(--success)'; }
+    console.log(`✓ Buffer aplicado: ${state.water.length} agua · ${state.waste.length} residuos · ${state.carbon.length} carbono`);
+  } else {
+    // Aún no llegó — cargar ahora
+    sbCargarTodo();
+  }
 
   // Cargar historial si la vista inicial es datos
   if (state.currentView === 'data') renderUploadHistory();
