@@ -86,7 +86,7 @@ async function sbGuardarLoteAgua(registros) {
     const chunk = rows.slice(i, i + CHUNK);
     try {
       await db.from('water_readings')
-        .upsert(chunk, { onConflict: 'fecha,medidor,sucursal', ignoreDuplicates: false });
+        .upsert(chunk, { onConflict: 'fecha,medidor,sucursal', ignoreDuplicates: true });
     } catch(e) { console.warn(`Supabase lote agua chunk ${i}-${i+CHUNK}:`, e.message); }
   }
 }
@@ -108,7 +108,7 @@ async function sbGuardarLoteResiduos(registros) {
     const chunk = rows.slice(i, i + CHUNK);
     try {
       await db.from('waste_records')
-        .upsert(chunk, { onConflict: 'fecha,planta,subcategoria', ignoreDuplicates: false });
+        .upsert(chunk, { onConflict: 'fecha,planta,subcategoria', ignoreDuplicates: true });
     } catch(e) { console.warn(`Supabase lote residuos chunk ${i}-${i+CHUNK}:`, e.message); }
   }
 }
@@ -130,7 +130,7 @@ async function sbGuardarLoteCarbon(registros) {
     const chunk = rows.slice(i, i + CHUNK);
     try {
       await db.from('carbon_records')
-        .upsert(chunk, { onConflict: 'fecha,planta,subcategoria', ignoreDuplicates: false });
+        .upsert(chunk, { onConflict: 'fecha,planta,subcategoria', ignoreDuplicates: true });
     } catch(e) { console.warn(`Supabase lote carbono chunk ${i}-${i+CHUNK}:`, e.message); }
   }
 }
