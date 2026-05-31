@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EcoTrack · Plataforma de Gestión Ambiental</title>
+<title>BatebolGreen · Plataforma de Gestión Ambiental</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -388,10 +388,11 @@ input, select { font-family: inherit; color: inherit; }
 .brand-logo {
   width: 36px; height: 36px;
   border-radius: 10px;
-  background: var(--ink);
+  background: linear-gradient(135deg, #059669, #10b981);
   display: grid; place-items: center;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(5,150,105,.35);
 }
 :root[data-theme="dark"] .brand-logo { background: var(--lime); }
 .brand-logo::after {
@@ -408,8 +409,9 @@ input, select { font-family: inherit; color: inherit; }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.02em;
   color: var(--ink);
   letter-spacing: -0.02em;
   line-height: 1;
@@ -1540,7 +1542,7 @@ input, select { font-family: inherit; color: inherit; }
 }
 .lc-brand-icon {
   width: 52px; height: 52px; border-radius: 14px;
-  background: linear-gradient(135deg, #2563a8, #14b8a6);
+  background: linear-gradient(135deg, #059669, #10b981);
   display: grid; place-items: center; flex-shrink: 0;
 }
 .lc-brand-icon svg { width: 26px; height: 26px; stroke: #fff; }
@@ -1761,11 +1763,11 @@ input, select { font-family: inherit; color: inherit; }
       <!-- Brand -->
       <div class="lc-brand">
         <div class="lc-brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
         </div>
         <div>
-          <div class="lc-brand-name">EcoTrack</div>
-          <div class="lc-brand-sub">Gestión Ambiental</div>
+          <div class="lc-brand-name">BatebolGreen</div>
+          <div class="lc-brand-sub">BATEBOL S.A.</div>
         </div>
       </div>
 
@@ -1813,7 +1815,7 @@ input, select { font-family: inherit; color: inherit; }
     <div class="guard-brand">
       <div class="guard-brand-dot"></div>
       <div>
-        <div class="guard-brand-name">EcoTrack · Registro de agua</div>
+        <div class="guard-brand-name">BatebolGreen · Registro de agua</div>
         <div class="guard-brand-user" id="guard-topbar-user">Modo guardia</div>
       </div>
     </div>
@@ -1890,12 +1892,13 @@ input, select { font-family: inherit; color: inherit; }
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
         </svg>
       </div>
       <div>
-        <div class="brand-name">EcoTrack</div>
+        <div class="brand-name">BatebolGreen</div>
         <div class="brand-sub">Gestión Ambiental</div>
       </div>
     </div>
@@ -1908,7 +1911,7 @@ input, select { font-family: inherit; color: inherit; }
 
     <div class="nav-section-title">Módulos</div>
     <button class="nav-item" data-view="carbon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
       Huella de Carbono
       <span class="nav-count" id="nav-carbon-count"></span>
     </button>
@@ -1996,7 +1999,7 @@ input, select { font-family: inherit; color: inherit; }
           <div class="home-kpi-card hkc-carbon" data-goto="carbon">
             <div class="hkc-top">
               <div class="hkc-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
               </div>
               <div class="hkc-badge">GHG Protocol</div>
             </div>
@@ -2509,7 +2512,7 @@ input, select { font-family: inherit; color: inherit; }
           <div id="carbon-dashboard" style="display:none">
           <div class="kpi-grid">
             <div class="kpi-card kpi-carbon">
-              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg></div>
+              <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></div>
               <div class="kpi-label">Emisiones totales</div>
               <div class="kpi-value" id="k-carbon-total">0<span class="kpi-unit">tnCO₂eq</span></div>
             </div>
@@ -2577,7 +2580,7 @@ input, select { font-family: inherit; color: inherit; }
           <div class="form-manual" id="form-carbon-wrap">
           <div class="form-manual-header" id="form-carbon-toggle">
             <div class="form-manual-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
             </div>
             <div class="form-manual-label">
               <div class="form-manual-title">Ingreso manual de consumo / emisión <span class="manual-badge" id="badge-carbon-manual">0</span></div>
@@ -2760,7 +2763,7 @@ input, select { font-family: inherit; color: inherit; }
 <div class="modal-overlay" id="modal-carbon">
   <div class="modal-box">
     <div class="modal-header">
-      <div class="modal-header-icon carbon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9H17.5a4.5 4.5 0 1 1 0 9Z"/></svg></div>
+      <div class="modal-header-icon carbon"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></div>
       <div class="modal-title"><h3>Registrar consumo / emisión <span class="manual-badge" id="badge-carbon-modal">0</span></h3><p>Registro rápido · supervisores · personal operativo</p></div>
       <button class="modal-close" onclick="closeModal('modal-carbon')">✕</button>
     </div>
@@ -4365,7 +4368,7 @@ document.getElementById('btn-export-xlsx').addEventListener('click', () => {
   const carbonTotal = state.carbon.reduce((s,r)=>s+r.tco2e,0);
 
   const resumen = [
-    ['EcoTrack · Informe Ambiental'],
+    ['BatebolGreen · Informe Ambiental'],
     ['Generado:', new Date().toLocaleString('es-BO')],
     [], ['Indicador', 'Valor', 'Unidad'],
     ['Huella de carbono', carbonTotal, 'tnCO₂eq'],
@@ -4397,7 +4400,7 @@ document.getElementById('btn-export-xlsx').addEventListener('click', () => {
     Object.entries(state.factors).map(([k,v]) => ({ Subcategoria: k, Factor_tnCO2eq: v }))
   ), 'Factores_Emision');
 
-  XLSX.writeFile(wb, `EcoTrack_Datos_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb, `BatebolGreen_Datos_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Excel generado', 'Datos exportados');
 });
 
@@ -5399,7 +5402,7 @@ async function generarPDFMejorado() {
   doc.setFillColor(14,165,233,0.5); doc.circle(25,245,22,'F');
   doc.setTextColor(255,255,255);
   doc.setFontSize(44); doc.setFont('helvetica','bold');
-  doc.text('EcoTrack', 18, 128);
+  doc.text('BatebolGreen', 18, 128);
   doc.setFontSize(15); doc.setFont('helvetica','normal');
   doc.setTextColor(180,210,240);
   doc.text('Plataforma de Gestión Ambiental', 18, 143);
@@ -5420,7 +5423,7 @@ async function generarPDFMejorado() {
   const pageHeader = () => {
     doc.setFillColor(15,42,74); doc.rect(0,0,210,12,'F');
     doc.setTextColor(255); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text('EcoTrack · Informe Técnico Ambiental', 12, 8);
+    doc.text('BatebolGreen · Informe Técnico Ambiental', 12, 8);
     doc.setTextColor(180,210,240); doc.setFont('helvetica','normal');
     doc.text(periodo, 198, 8, {align:'right'});
   };
@@ -5546,11 +5549,11 @@ async function generarPDFMejorado() {
     doc.setPage(i);
     doc.setFillColor(15,42,74); doc.rect(0,287,210,10,'F');
     doc.setFontSize(7); doc.setTextColor(180,210,240); doc.setFont('helvetica','normal');
-    doc.text('EcoTrack · Informe Técnico Ambiental · '+periodo, 12, 293);
+    doc.text('BatebolGreen · Informe Técnico Ambiental · '+periodo, 12, 293);
     doc.text('Página '+i+' de '+np, 198, 293, {align:'right'});
   }
 
-  doc.save('EcoTrack_Informe_'+new Date().toISOString().slice(0,10)+'.pdf');
+  doc.save('BatebolGreen_Informe_'+new Date().toISOString().slice(0,10)+'.pdf');
   toast('PDF generado', 'Descarga lista');
 }
 
