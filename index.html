@@ -5781,14 +5781,15 @@ function gwInitListeners() {
 
     if(isNaN(lact)) { if(inpConsumo) inpConsumo.value=''; return; }
 
-    if(lact < lant) {
-      if(alertEl) alertEl.style.display='block';
+    const reinicioPreview = esReinicio(lant, lact);
+    if(lact < lant && !reinicioPreview) {
+      if(alertEl) { alertEl.innerHTML='⚠️ La lectura actual es menor que la anterior. Verifica el valor.'; alertEl.style.display='block'; }
       inpLact.classList.add('err');
       if(inpConsumo) inpConsumo.value='';
     } else {
       if(alertEl) alertEl.style.display='none';
       inpLact.classList.remove('err');
-      const consumo = lact - lant;
+      const consumo = calcularConsumoReal(lant, lact);
       if(inpConsumo) inpConsumo.value = consumo.toFixed(3) + ' m³';
     }
   });
@@ -5815,6 +5816,20 @@ function gwActualizarLant() {
   inpLant.value = ult ? fmtFull(ult.lectura_act,3) : 'Sin registros previos';
 }
 
+/* Detectar reinicio del medidor (vuelta a 0):
+   Si lact < lant pero lact < 100 y lant > 9000 → es un reinicio
+   El consumo real = (9999.99 - lant) + lact  */
+function esReinicio(lant, lact) {
+  return lact < lant && lant > 9000 && lact < 100;
+}
+
+function calcularConsumoReal(lant, lact) {
+  if (esReinicio(lant, lact)) {
+    return parseFloat((9999.99 - lant + lact).toFixed(3));
+  }
+  return parseFloat((lact - lant).toFixed(3));
+}
+
 async function gwGuardar() {
   const fecha   = document.getElementById('gw-fecha')?.value;
   const planta  = document.getElementById('gw-planta')?.value;
@@ -5824,43 +5839,80 @@ async function gwGuardar() {
   const lant    = parsearLecturaMedidor(lantEl?.value) || 0;
   const alertEl = document.getElementById('gw-alert');
 
+  // ── FIX 1: Verificar conexión a internet antes de guardar ──
+  if (!navigator.onLine) {
+    if(alertEl) {
+      alertEl.innerHTML = '📵 Sin conexión a internet. Conéctate e intenta de nuevo. El registro NO fue guardado.';
+      alertEl.style.display = 'block';
+    }
+    return;
+  }
+
   let ok = true;
   const markErr = id => { document.getElementById(id)?.classList.add('err'); ok=false; };
-  if(!fecha)   markErr('gw-fecha');
-  if(!planta)  markErr('gw-planta');
-  if(!medidor) markErr('gw-medidor');
+  if(!fecha)            markErr('gw-fecha');
+  if(!planta)           markErr('gw-planta');
+  if(!medidor)          markErr('gw-medidor');
   if(isNaN(lact)||lact<0) markErr('gw-lact');
-  if(!isNaN(lact)&&lact<lant) { if(alertEl) alertEl.style.display='block'; ok=false; }
+
+  // ── FIX 2: Detectar reinicio del medidor vs error de lectura ──
+  const reinicio = esReinicio(lant, lact);
+  if (!isNaN(lact) && lact < lant && !reinicio) {
+    if(alertEl) {
+      alertEl.innerHTML = '⚠️ La lectura actual es menor que la anterior. Verifica el valor ingresado.';
+      alertEl.style.display = 'block';
+    }
+    ok = false;
+  }
   if(!ok) return;
+  if(alertEl) alertEl.style.display = 'none';
 
   const btn = document.getElementById('gw-save');
   if(btn) { btn.disabled=true; btn.innerHTML='<svg style="width:19px;height:19px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Guardando…'; }
 
-  const consumo = parseFloat((lact-lant).toFixed(3));
+  // Calcular consumo (maneja reinicio automáticamente)
+  const consumo = calcularConsumoReal(lant, lact);
+
   const reg = {
     fecha: new Date(fecha+'T12:00:00'), sucursal: planta, medidor,
     lectura_ant: lant, lectura_act: lact, consumo, unidad: 'm3',
     _consumo_excel: consumo, _lant_excel: lant, _guardia: true,
+    _reinicio: reinicio,
   };
-  state.water.push(reg);
-  await sbGuardarAgua(reg).catch(()=>{});
 
-  // Toast de éxito
-  const toast  = document.getElementById('gw-toast');
-  const msg    = document.getElementById('gw-toast-msg');
-  const sub    = document.getElementById('gw-toast-sub');
-  if(msg) msg.textContent = `${consumo.toFixed(3)} m³ registrados en ${medidor}`;
-  if(sub) sub.textContent = new Date(fecha).toLocaleDateString('es-BO',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  if(toast) toast.classList.add('show');
-  setTimeout(()=>{ if(toast) toast.classList.remove('show'); }, 5000);
+  try {
+    await sbGuardarAgua(reg);
+    state.water.push(reg);
 
-  // Reset: mantiene planta + medidor, actualiza lectura anterior
-  const lActEl = document.getElementById('gw-lact');
-  const cEl    = document.getElementById('gw-consumo');
-  if(lActEl) { lActEl.value=''; lActEl.classList.remove('err'); }
-  if(cEl) cEl.value='';
-  if(lantEl) lantEl.value = fmtFull(lact,3);
-  if(alertEl) alertEl.style.display='none';
+    // Toast de éxito
+    const toast = document.getElementById('gw-toast');
+    const msg   = document.getElementById('gw-toast-msg');
+    const sub   = document.getElementById('gw-toast-sub');
+    const consumoLabel = reinicio
+      ? `${consumo.toFixed(3)} m³ (reinicio de medidor detectado)`
+      : `${consumo.toFixed(3)} m³ registrados en ${medidor}`;
+    if(msg) msg.textContent = consumoLabel;
+    if(sub) sub.textContent = new Date(fecha).toLocaleDateString('es-BO',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    if(toast) toast.classList.add('show');
+    setTimeout(()=>{ if(toast) toast.classList.remove('show'); }, 5000);
+
+    // Reset: mantiene planta + medidor, actualiza lectura anterior
+    const lActEl = document.getElementById('gw-lact');
+    const cEl    = document.getElementById('gw-consumo');
+    if(lActEl) { lActEl.value=''; lActEl.classList.remove('err'); }
+    if(cEl)    cEl.value='';
+    if(lantEl) lantEl.value = fmtFull(lact,3);
+
+  } catch(e) {
+    // Error al guardar en Supabase (posiblemente perdió internet justo al enviar)
+    if(alertEl) {
+      alertEl.innerHTML = '❌ Error al guardar. Verifica tu conexión e intenta de nuevo.';
+      alertEl.style.display = 'block';
+    }
+    // Revertir el registro del state si se añadió
+    state.water = state.water.filter(r => r !== reg);
+  }
+
   if(btn) { btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><polyline points="20 6 9 17 4 12"/></svg> Guardar lectura'; }
 }
 
