@@ -1750,6 +1750,82 @@ input, select { font-family: inherit; color: inherit; }
 .guard-toast-sub { font-size: 12px; color: #065f46; margin-top: 1px; }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Panel historial últimas lecturas (guardia) ── */
+.gw-hist-panel {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  padding: 20px;
+  margin-top: 14px;
+}
+.gw-hist-title {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: #64748b; margin: 0 0 14px;
+  display: flex; align-items: center; gap: 7px;
+}
+.gw-hist-title svg { width: 13px; height: 13px; stroke: #3b82f6; }
+.gw-hist-empty {
+  text-align: center; padding: 20px 0;
+  color: #475569; font-size: 13px;
+}
+.gw-hist-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.gw-hist-row {
+  background: #0f0f1a;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  transition: border-color .15s;
+}
+.gw-hist-row:first-child {
+  border-color: rgba(16,185,129,.3);
+  background: rgba(16,185,129,.04);
+}
+.gw-hist-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #334155; flex-shrink: 0;
+}
+.gw-hist-row:first-child .gw-hist-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+}
+.gw-hist-info { min-width: 0; }
+.gw-hist-medidor {
+  font-size: 13px; font-weight: 700; color: #e2e8f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gw-hist-meta {
+  font-size: 11px; color: #475569; margin-top: 2px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.gw-hist-fecha {
+  background: rgba(255,255,255,.05);
+  border-radius: 4px; padding: 1px 6px;
+  font-size: 10.5px; color: #64748b;
+}
+.gw-hist-right { text-align: right; flex-shrink: 0; }
+.gw-hist-consumo {
+  font-size: 16px; font-weight: 800;
+  color: #10b981; font-family: monospace;
+}
+.gw-hist-row:first-child .gw-hist-consumo { color: #34d399; }
+.gw-hist-unit {
+  font-size: 10px; color: #475569;
+  text-transform: uppercase; letter-spacing: .8px;
+}
+.gw-hist-reinicio {
+  font-size: 10px; color: #f59e0b;
+  background: rgba(245,158,11,.1);
+  border-radius: 4px; padding: 1px 6px;
+  margin-top: 2px; display: inline-block;
+}
 </style>
 </head>
 <body>
@@ -1882,6 +1958,18 @@ input, select { font-family: inherit; color: inherit; }
         <div class="guard-toast-sub" id="gw-toast-sub">La lectura fue registrada en el sistema</div>
       </div>
     </div>
+
+    <!-- Historial últimas lecturas -->
+    <div class="gw-hist-panel">
+      <div class="gw-hist-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Últimas lecturas registradas
+      </div>
+      <div id="gw-hist-content">
+        <div class="gw-hist-empty">Cargando lecturas…</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -5673,7 +5761,12 @@ document.getElementById('btn-login-guard')?.addEventListener('click', () => {
   // Cargar datos de Supabase para lectura anterior (sin bloquear)
   if (!window._sbLoaded) {
     window._sbLoaded = true;
-    sbCargarTodo().then(() => gwActualizarLant()).catch(() => {});
+    sbCargarTodo().then(() => {
+      gwActualizarLant();
+      renderGwHistorial();
+    }).catch(() => {});
+  } else {
+    renderGwHistorial();
   }
 
   gwInitListeners();
@@ -5790,7 +5883,7 @@ function gwInitListeners() {
       if(alertEl) alertEl.style.display='none';
       inpLact.classList.remove('err');
       const consumo = calcularConsumoReal(lant, lact);
-      if(inpConsumo) inpConsumo.value = consumo.toFixed(3) + ' m³';
+      if(inpConsumo) inpConsumo.value = fmtConsumo(consumo) + ' m³';
     }
   });
 
@@ -5889,8 +5982,8 @@ async function gwGuardar() {
     const msg   = document.getElementById('gw-toast-msg');
     const sub   = document.getElementById('gw-toast-sub');
     const consumoLabel = reinicio
-      ? `${consumo.toFixed(3)} m³ (reinicio de medidor detectado)`
-      : `${consumo.toFixed(3)} m³ registrados en ${medidor}`;
+      ? `${fmtConsumo(consumo)} m³ (reinicio de medidor detectado)`
+      : `${fmtConsumo(consumo)} m³ registrados en ${medidor}`;
     if(msg) msg.textContent = consumoLabel;
     if(sub) sub.textContent = new Date(fecha).toLocaleDateString('es-BO',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
     if(toast) toast.classList.add('show');
@@ -5902,6 +5995,8 @@ async function gwGuardar() {
     if(lActEl) { lActEl.value=''; lActEl.classList.remove('err'); }
     if(cEl)    cEl.value='';
     if(lantEl) lantEl.value = fmtFull(lact,3);
+    // Actualizar historial con el nuevo registro
+    renderGwHistorial();
 
   } catch(e) {
     // Error al guardar en Supabase (posiblemente perdió internet justo al enviar)
@@ -5928,6 +6023,69 @@ function gwLimpiar() {
 }
 
 // ── La app no se inicia hasta que el admin hace login ──
+
+
+/* Formatear consumo: 2 decimales con coma (ej: 2,68 m³) */
+function fmtConsumo(val) {
+  if (typeof val !== 'number' || isNaN(val)) return '—';
+  return val.toFixed(2).replace('.', ',');
+}
+
+/* ============================================================
+   HISTORIAL ÚLTIMAS LECTURAS — vista guardia
+   ============================================================ */
+function renderGwHistorial() {
+  const content = document.getElementById('gw-hist-content');
+  if (!content) return;
+
+  // Tomar todos los registros de agua, ordenar por fecha desc, tomar los últimos 6
+  const recientes = [...state.water]
+    .filter(r => r.lectura_act !== undefined)
+    .sort((a, b) => {
+      // Ordenar por fecha desc, luego por created_at si existe
+      const fd = b.fecha - a.fecha;
+      if (fd !== 0) return fd;
+      return 0;
+    })
+    .slice(0, 6);
+
+  if (!recientes.length) {
+    content.innerHTML = '<div class="gw-hist-empty">Sin lecturas recientes en el sistema</div>';
+    return;
+  }
+
+  content.innerHTML = '<div class="gw-hist-list">' +
+    recientes.map((r, i) => {
+      const fecha     = r.fecha instanceof Date
+        ? r.fecha.toLocaleDateString('es-BO', { day:'2-digit', month:'2-digit', year:'numeric' })
+        : r.fecha;
+      const lant      = typeof r.lectura_ant === 'number' ? fmtFull(r.lectura_ant, 2) : (r.lant_excel ? fmtFull(r.lant_excel, 2) : '—');
+      const lact      = typeof r.lectura_act === 'number' ? fmtFull(r.lectura_act, 2) : '—';
+      const consumo   = fmtConsumo(r.consumo);
+      const esNuevo   = i === 0;
+      const reinicio  = r._reinicio ? '<span class="gw-hist-reinicio">↩ reinicio</span>' : '';
+
+      return `
+        <div class="gw-hist-row">
+          <div class="gw-hist-dot"></div>
+          <div class="gw-hist-info">
+            <div class="gw-hist-medidor">${r.medidor || r.sucursal || '—'}</div>
+            <div class="gw-hist-meta">
+              <span class="gw-hist-fecha">${fecha}</span>
+              <span>${r.sucursal || ''}</span>
+              <span style="color:#334155">·</span>
+              <span style="color:#475569">${lant} → ${lact}</span>
+              ${reinicio}
+            </div>
+          </div>
+          <div class="gw-hist-right">
+            <div class="gw-hist-consumo">${consumo}</div>
+            <div class="gw-hist-unit">m³</div>
+          </div>
+        </div>`;
+    }).join('') +
+  '</div>';
+}
 </script>
 </body>
 </html>
