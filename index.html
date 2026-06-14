@@ -188,6 +188,7 @@ function _mapCarbon(r) {
     unidad:       r.unidad,
     factor:       r.factor,
     tco2e:        r.tco2e,
+    scope:        getScope(r.subcategoria),
   };
 }
 
@@ -1826,6 +1827,57 @@ input, select { font-family: inherit; color: inherit; }
   border-radius: 4px; padding: 1px 6px;
   margin-top: 2px; display: inline-block;
 }
+
+/* ── Tarjetas de Alcances (carbono) ── */
+.scope-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 768px) { .scope-cards { grid-template-columns: 1fr; } }
+.scope-card {
+  border-radius: var(--r);
+  padding: 18px;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.scope-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px;
+}
+.scope-card.s1::before { background: #dc2626; }
+.scope-card.s2::before { background: #f59e0b; }
+.scope-card.s3::before { background: #3b82f6; }
+.scope-card-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.scope-badge {
+  font-size: 10px; font-weight: 800; letter-spacing: .5px;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 5px;
+  color: #fff;
+}
+.scope-card.s1 .scope-badge { background: #dc2626; }
+.scope-card.s2 .scope-badge { background: #f59e0b; }
+.scope-card.s3 .scope-badge { background: #3b82f6; }
+.scope-card-desc { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.scope-card-value {
+  font-family: var(--font-mono); font-size: 26px; font-weight: 700;
+  color: var(--ink); line-height: 1;
+}
+.scope-card-unit { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 4px; }
+.scope-card-pct {
+  font-size: 12px; font-weight: 700; margin-top: 4px;
+}
+.scope-card.s1 .scope-card-pct { color: #dc2626; }
+.scope-card.s2 .scope-card-pct { color: #f59e0b; }
+.scope-card.s3 .scope-card-pct { color: #3b82f6; }
+.scope-card-detail {
+  font-size: 11px; color: var(--text-muted); margin-top: 8px;
+  line-height: 1.4; padding-top: 8px; border-top: 1px solid var(--border);
+}
 </style>
 </head>
 <body>
@@ -2637,7 +2689,28 @@ input, select { font-family: inherit; color: inherit; }
             <div class="chart-wrap"><canvas id="chart-carbon-trend"></canvas></div>
           </div>
 
-          
+          <!-- ══ ALCANCES (GHG Protocol) ══ -->
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-header">
+              <div>
+                <div class="panel-eyebrow">GHG Protocol · ISO 14064</div>
+                <div class="panel-title">Clasificación por Alcances</div>
+                <div class="panel-sub">Emisiones agrupadas según el estándar internacional de inventario de GEI</div>
+              </div>
+            </div>
+            <div class="scope-cards" id="scope-cards"></div>
+            <div class="grid-2" style="margin-top:16px">
+              <div>
+                <div class="panel-eyebrow" style="margin-bottom:10px">Distribución por alcance</div>
+                <div class="chart-wrap" style="height:260px"><canvas id="chart-carbon-scope"></canvas></div>
+              </div>
+              <div>
+                <div class="panel-eyebrow" style="margin-bottom:10px">Evolución mensual por alcance</div>
+                <div class="chart-wrap" style="height:260px"><canvas id="chart-carbon-scope-trend"></canvas></div>
+              </div>
+            </div>
+          </div>
+
         </div>
         </div>
 
@@ -2922,6 +2995,37 @@ const DEFAULT_FACTORS = {
   'BOBINAS': 0.0016, 'PALLET': 0.0014, 'OFICINA': 0.0015, 'PET': 0.0028,
   'BIDONES (SOPLO)': 0.0030, 'ELECTRICIDAD': 0.000395, 'GAS NATURAL': 0.002985,
   'DIESEL': 0.002549, 'GASOLINA': 0.002149,
+};
+
+/* ============================================================
+   CLASIFICACIÓN POR ALCANCES (GHG Protocol)
+   Alcance 1: Emisiones directas — combustión de fuentes propias
+   Alcance 2: Emisiones indirectas — energía eléctrica comprada
+   Alcance 3: Otras emisiones indirectas — residuos, cadena de valor
+   ============================================================ */
+const SCOPE_MAP = {
+  // Alcance 1 — Combustión directa (fuentes propias)
+  'GAS NATURAL': 1, 'DIESEL': 1, 'GASOLINA': 1, 'GLP': 1, 'GNV': 1,
+  // Alcance 2 — Electricidad comprada
+  'ELECTRICIDAD': 2, 'ENERGIA ELECTRICA': 2,
+  // Alcance 3 — todo lo demás (residuos) se asigna por defecto
+};
+
+/* Determinar el alcance de una subcategoría */
+function getScope(subcategoria) {
+  const subN = norm(subcategoria);
+  if (SCOPE_MAP[subN]) return SCOPE_MAP[subN];
+  // Buscar coincidencias parciales para combustibles
+  if (/DIESEL|GASOLINA|GAS NATURAL|GLP|GNV|COMBUSTIBLE/.test(subN)) return 1;
+  if (/ELECTRIC|ENERGIA/.test(subN)) return 2;
+  // Por defecto, residuos y otros → Alcance 3
+  return 3;
+}
+
+const SCOPE_INFO = {
+  1: { label: 'Alcance 1', desc: 'Emisiones directas', detail: 'Combustión de fuentes propias (calderas, vehículos, maquinaria)', color: '#dc2626' },
+  2: { label: 'Alcance 2', desc: 'Energía comprada', detail: 'Electricidad adquirida de la red', color: '#f59e0b' },
+  3: { label: 'Alcance 3', desc: 'Otras indirectas', detail: 'Residuos, cadena de valor, transporte tercerizado', color: '#3b82f6' },
 };
 
 /* Paletas adaptativas */
@@ -3310,6 +3414,7 @@ function parseCarbon(wb) {
       subcategoria: String(subcategoria).trim(),
       cantidad, unidad: String(unidad || '').trim(),
       factor, tco2e,
+      scope: getScope(subcategoria),
     });
   }
   if (!parsed.length) return toast('Sin datos válidos', 'No se encontraron registros', 'error');
@@ -3784,6 +3889,8 @@ function renderCarbon() {
     options: chartOpts({ yLabel: 'tnCO₂eq' })
   });
 
+  renderCarbonScopes(data, total, COLORS);
+
   renderCarbonTable(data);
   document.getElementById('carbon-record-count').textContent = data.length;
   const cTrazaWrap = document.getElementById('carbon-traza-wrap');
@@ -3793,27 +3900,131 @@ function renderCarbon() {
   }
 }
 
+/* ============================================================
+   ALCANCES — render de tarjetas y gráficos
+   ============================================================ */
+function renderCarbonScopes(data, total, COLORS) {
+  // Calcular totales por alcance
+  const scopeTotals = { 1: 0, 2: 0, 3: 0 };
+  data.forEach(r => {
+    const s = r.scope || getScope(r.subcategoria);
+    scopeTotals[s] = (scopeTotals[s] || 0) + r.tco2e;
+  });
+
+  // Tarjetas
+  const cardsWrap = document.getElementById('scope-cards');
+  if (cardsWrap) {
+    cardsWrap.innerHTML = [1,2,3].map(s => {
+      const info = SCOPE_INFO[s];
+      const val  = scopeTotals[s] || 0;
+      const pct  = total > 0 ? (val/total*100) : 0;
+      return `
+        <div class="scope-card s${s}">
+          <div class="scope-card-head">
+            <span class="scope-badge">${info.label}</span>
+            <span class="scope-card-desc">${info.desc}</span>
+          </div>
+          <div>
+            <span class="scope-card-value">${fmtFull(val, 3)}</span>
+            <span class="scope-card-unit">tnCO₂eq</span>
+          </div>
+          <div class="scope-card-pct">${pct.toFixed(1)}% del total</div>
+          <div class="scope-card-detail">${info.detail}</div>
+        </div>`;
+    }).join('');
+  }
+
+  const bgSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+  const scopeColors = ['#dc2626', '#f59e0b', '#3b82f6'];
+
+  // Gráfico doughnut por alcance
+  makeChart('chart-carbon-scope', {
+    type: 'doughnut',
+    data: {
+      labels: ['Alcance 1', 'Alcance 2', 'Alcance 3'],
+      datasets: [{
+        data: [scopeTotals[1], scopeTotals[2], scopeTotals[3]],
+        backgroundColor: scopeColors, borderColor: bgSurface, borderWidth: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, weight: '500' }, boxWidth: 8, boxHeight: 8 } },
+        tooltip: {
+          backgroundColor: '#0a1f16', padding: 12, cornerRadius: 8,
+          callbacks: { label: c => `${c.label}: ${fmtFull(c.parsed, 3)} tnCO₂eq (${total>0?(c.parsed/total*100).toFixed(1):0}%)` }
+        }
+      }
+    }
+  });
+
+  // Gráfico de barras apiladas: evolución mensual por alcance
+  const monthScope = {};
+  data.forEach(r => {
+    const ym = yearMonth(r.fecha);
+    const s = r.scope || getScope(r.subcategoria);
+    if (!monthScope[ym]) monthScope[ym] = { 1:0, 2:0, 3:0 };
+    monthScope[ym][s] += r.tco2e;
+  });
+  const mArr = Object.keys(monthScope).sort();
+  makeChart('chart-carbon-scope-trend', {
+    type: 'bar',
+    data: {
+      labels: mArr.map(monthLabel),
+      datasets: [1,2,3].map((s,i) => ({
+        label: SCOPE_INFO[s].label,
+        data: mArr.map(m => monthScope[m][s] || 0),
+        backgroundColor: scopeColors[i],
+        borderRadius: 4, borderSkipped: false,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 } },
+             title: { display: true, text: 'tnCO₂eq', font: { size: 10 } } }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10, weight: '500' }, boxWidth: 8, boxHeight: 8 } },
+        tooltip: { backgroundColor: '#0a1f16', padding: 10, cornerRadius: 8,
+          callbacks: { label: c => `${c.dataset.label}: ${fmtFull(c.parsed.y, 3)} tnCO₂eq` } }
+      }
+    }
+  });
+}
+
 function renderCarbonTable(data) {
   const t = document.getElementById('table-carbon');
   const top = [...data].sort((a,b) => b.tco2e - a.tco2e).slice(0, 200);
   const c = getC();
+  const scopeBadge = s => {
+    const colors = { 1:'#dc2626', 2:'#f59e0b', 3:'#3b82f6' };
+    return `<span style="display:inline-block;font-size:10px;font-weight:800;color:#fff;
+      background:${colors[s]};border-radius:4px;padding:2px 7px;white-space:nowrap">A${s}</span>`;
+  };
   t.innerHTML = `
     <thead><tr>
       <th>Fecha</th><th>Planta</th><th>Categoría</th><th>Subcategoría</th>
+      <th>Alcance</th>
       <th class="num">Cantidad</th><th>Unidad</th>
       <th class="num">Factor</th><th class="num">tnCO₂eq</th>
     </tr></thead>
-    <tbody>${top.map(r => `
+    <tbody>${top.map(r => {
+        const s = r.scope || getScope(r.subcategoria);
+        return `
         <tr>
           <td>${r.fecha.toLocaleDateString('es-BO')}</td>
           <td>${r.planta}</td>
           <td>${r.categoria}</td>
           <td>${r.subcategoria}</td>
+          <td>${scopeBadge(s)}</td>
           <td class="num">${fmtFull(r.cantidad)}</td>
           <td>${r.unidad}</td>
           <td class="num">${r.factor.toFixed(6)}</td>
           <td class="num" style="color:${c.carbon};font-weight:700">${fmtFull(r.tco2e, 3)}</td>
-        </tr>`).join('')}</tbody>`;
+        </tr>`;}).join('')}</tbody>`;
 }
 
 /* ============================================================
