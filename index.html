@@ -1878,6 +1878,45 @@ input, select { font-family: inherit; color: inherit; }
   font-size: 11px; color: var(--text-muted); margin-top: 8px;
   line-height: 1.4; padding-top: 8px; border-top: 1px solid var(--border);
 }
+
+/* ── Botón eliminar registro en tablas (solo admin) ── */
+.btn-del-reg {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 4px 6px; border-radius: 6px;
+  transition: all .15s; font-size: 13px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-del-reg:hover { background: rgba(220,38,38,.12); color: var(--danger); }
+.btn-del-reg svg { width: 15px; height: 15px; pointer-events: none; }
+
+/* Modal de confirmación eliminación */
+.del-confirm-overlay {
+  position: fixed; inset: 0; z-index: 99998;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.del-confirm-overlay.show { opacity: 1; pointer-events: all; }
+.del-confirm-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 28px; max-width: 420px; width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+.del-confirm-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(220,38,38,.1); border: 1px solid rgba(220,38,38,.2);
+  display: grid; place-items: center; margin-bottom: 14px;
+}
+.del-confirm-icon svg { width: 22px; height: 22px; stroke: var(--danger); }
+.del-confirm-title { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.del-confirm-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; line-height: 1.5; }
+.del-confirm-detail {
+  background: var(--bg-warm); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 10px 14px; margin-bottom: 20px;
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.6;
+}
+.del-confirm-btns { display: flex; gap: 10px; }
+.del-confirm-btns .btn { flex: 1; justify-content: center; }
 </style>
 </head>
 <body>
@@ -2024,6 +2063,27 @@ input, select { font-family: inherit; color: inherit; }
 
   </div>
 </div>
+<!-- MODAL CONFIRMAR ELIMINACIÓN DE REGISTRO -->
+<div class="del-confirm-overlay" id="del-confirm-overlay">
+  <div class="del-confirm-card">
+    <div class="del-confirm-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      </svg>
+    </div>
+    <div class="del-confirm-title">Eliminar registro</div>
+    <div class="del-confirm-sub">Esta acción eliminará el registro de la base de datos en Supabase. No se puede deshacer.</div>
+    <div class="del-confirm-detail" id="del-confirm-detail">—</div>
+    <div class="del-confirm-btns">
+      <button class="btn" id="del-confirm-cancel">Cancelar</button>
+      <button class="btn btn-danger" id="del-confirm-ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg>
+        Eliminar permanentemente
+      </button>
+    </div>
+  </div>
+</div>
+
 
 <div class="app" id="main-app" style="display:none">
   <!-- ============================================================
@@ -3664,8 +3724,9 @@ function renderWaterTable(data) {
       <th>Fecha</th><th>Planta</th><th>Medidor</th>
       <th class="num">L. anterior</th><th class="num">L. actual</th>
       <th class="num">Consumo (m³)</th>
+      <th style="width:40px"></th>
     </tr></thead>
-    <tbody>${top.map(r => `
+    <tbody>${top.map((r,i) => `
         <tr>
           <td>${r.fecha.toLocaleDateString('es-BO')}</td>
           <td>${r.sucursal}</td>
@@ -3673,7 +3734,15 @@ function renderWaterTable(data) {
           <td class="num">${fmtFull(r.lectura_ant, 3)}</td>
           <td class="num">${fmtFull(r.lectura_act, 3)}</td>
           <td class="num" style="color:${r.consumo>0?c.water:'var(--text-muted)'};font-weight:${r.consumo>0?'700':'400'}">${fmtFull(r.consumo, 3)}</td>
+          <td>
+            <button class="btn-del-reg" data-mod="water" data-idx="${i}" title="Eliminar registro">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/>
+              </svg>
+            </button>
+          </td>
         </tr>`).join('')}</tbody>`;
+  window._waterTableData = top;
 }
 
 /* ============================================================
@@ -3785,7 +3854,7 @@ function renderWasteTable(data) {
     const m = { 'PELIGROSO': 'red', 'RECICLABLE': 'green', 'NO APROVECHABLE': 'yellow', 'OTROS': 'neutral' };
     return '<span class="badge ' + (m[tipo]||'neutral') + '">' + tipo + '</span>';
   };
-  const rows = top.map(r => {
+  const rows = top.map((r, i) => {
     const rec = r._reciclada || 0;
     const recCell = rec > 0
       ? '<td class="num" style="color:var(--success);font-weight:700">' + fmtFull(rec) + '</td>'
@@ -3799,11 +3868,16 @@ function renderWasteTable(data) {
       + '<td class="num" style="font-weight:700">' + fmtFull(r.cantidad) + '</td>'
       + '<td>' + r.unidad + '</td>'
       + recCell
+      + '<td><button class="btn-del-reg" data-mod="waste" data-idx="' + i + '" title="Eliminar registro">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg>'
+      + '</button></td>'
       + '</tr>';
   }).join('');
+  window._wasteTableData = top;
   t.innerHTML = '<thead><tr>'
     + '<th>Fecha</th><th>Planta</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th>'
     + '<th class="num">Cantidad</th><th>Unidad</th><th class="num">Cant. Reciclada</th>'
+    + '<th style="width:40px"></th>'
     + '</tr></thead><tbody>' + rows + '</tbody>';
 }
 
@@ -4010,8 +4084,9 @@ function renderCarbonTable(data) {
       <th>Alcance</th>
       <th class="num">Cantidad</th><th>Unidad</th>
       <th class="num">Factor</th><th class="num">tnCO₂eq</th>
+      <th style="width:40px"></th>
     </tr></thead>
-    <tbody>${top.map(r => {
+    <tbody>${top.map((r,i) => {
         const s = r.scope || getScope(r.subcategoria);
         return `
         <tr>
@@ -4024,7 +4099,15 @@ function renderCarbonTable(data) {
           <td>${r.unidad}</td>
           <td class="num">${r.factor.toFixed(6)}</td>
           <td class="num" style="color:${c.carbon};font-weight:700">${fmtFull(r.tco2e, 3)}</td>
+          <td>
+            <button class="btn-del-reg" data-mod="carbon" data-idx="${i}" title="Eliminar registro">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/>
+              </svg>
+            </button>
+          </td>
         </tr>`;}).join('')}</tbody>`;
+  window._carbonTableData = top;
 }
 
 /* ============================================================
@@ -4647,6 +4730,127 @@ async function renderUploadHistory() {
 
 /* Botón actualizar historial */
 document.getElementById('btn-refresh-history')?.addEventListener('click', renderUploadHistory);
+
+/* ============================================================
+   ELIMINAR REGISTRO INDIVIDUAL — solo admins
+   ============================================================ */
+let _delPending = null;  // { modulo, index, registro }
+
+function showDeleteConfirm(modulo, idx, reg) {
+  _delPending = { modulo, idx, reg };
+
+  // Construir descripción del registro
+  let detail = '';
+  if (modulo === 'water') {
+    detail = `Módulo: Huella Hídrica
+Fecha: ${reg.fecha.toLocaleDateString('es-BO')}
+Medidor: ${reg.medidor}
+Planta: ${reg.sucursal}
+Consumo: ${reg.consumo} m³`;
+  } else if (modulo === 'waste') {
+    detail = `Módulo: Gestión de Residuos
+Fecha: ${reg.fecha.toLocaleDateString('es-BO')}
+Subcategoría: ${reg.subcategoria}
+Planta: ${reg.planta}
+Cantidad: ${reg.cantidad} ${reg.unidad}`;
+  } else if (modulo === 'carbon') {
+    detail = `Módulo: Huella de Carbono
+Fecha: ${reg.fecha.toLocaleDateString('es-BO')}
+Subcategoría: ${reg.subcategoria}
+Planta: ${reg.planta}
+tCO₂eq: ${reg.tco2e}`;
+  }
+  document.getElementById('del-confirm-detail').innerText = detail;
+  document.getElementById('del-confirm-overlay').classList.add('show');
+}
+
+document.getElementById('del-confirm-cancel')?.addEventListener('click', () => {
+  document.getElementById('del-confirm-overlay').classList.remove('show');
+  _delPending = null;
+});
+
+document.getElementById('del-confirm-ok')?.addEventListener('click', async () => {
+  if (!_delPending) return;
+  const { modulo, idx, reg } = _delPending;
+  const btn = document.getElementById('del-confirm-ok');
+  btn.disabled = true; btn.textContent = 'Eliminando…';
+
+  try {
+    // Borrar en Supabase según módulo
+    if (modulo === 'water') {
+      const fechaStr = reg.fecha instanceof Date ? reg.fecha.toISOString().slice(0,10) : reg.fecha;
+      const { error } = await db.from('water_readings')
+        .delete()
+        .eq('fecha', fechaStr)
+        .eq('medidor', reg.medidor)
+        .eq('sucursal', reg.sucursal);
+      if (error) throw error;
+      state.water = state.water.filter(r =>
+        !(r.medidor === reg.medidor && r.sucursal === reg.sucursal &&
+          r.fecha.toISOString().slice(0,10) === fechaStr));
+
+    } else if (modulo === 'waste') {
+      const fechaStr = reg.fecha instanceof Date ? reg.fecha.toISOString().slice(0,10) : reg.fecha;
+      const { error } = await db.from('waste_records')
+        .delete()
+        .eq('fecha', fechaStr)
+        .eq('planta', reg.planta)
+        .eq('subcategoria', reg.subcategoria);
+      if (error) throw error;
+      state.waste = state.waste.filter(r =>
+        !(r.planta === reg.planta && r.subcategoria === reg.subcategoria &&
+          r.fecha.toISOString().slice(0,10) === fechaStr));
+
+    } else if (modulo === 'carbon') {
+      const fechaStr = reg.fecha instanceof Date ? reg.fecha.toISOString().slice(0,10) : reg.fecha;
+      const { error } = await db.from('carbon_records')
+        .delete()
+        .eq('fecha', fechaStr)
+        .eq('planta', reg.planta)
+        .eq('subcategoria', reg.subcategoria);
+      if (error) throw error;
+      state.carbon = state.carbon.filter(r =>
+        !(r.planta === reg.planta && r.subcategoria === reg.subcategoria &&
+          r.fecha.toISOString().slice(0,10) === fechaStr));
+    }
+
+    // Cerrar modal y refrescar
+    document.getElementById('del-confirm-overlay').classList.remove('show');
+    toast('Registro eliminado', 'El registro fue borrado de la base de datos');
+
+    updateNavCounts(); updateHomeStats(); renderHome();
+    if (modulo === 'water')  renderWater();
+    if (modulo === 'waste')  renderWaste();
+    if (modulo === 'carbon') renderCarbon();
+    refreshDropdownsAll();
+
+  } catch(e) {
+    toast('Error', 'No se pudo eliminar: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/></svg> Eliminar permanentemente';
+    _delPending = null;
+  }
+});
+
+// Cerrar al hacer clic fuera
+document.getElementById('del-confirm-overlay')?.addEventListener('click', e => {
+  if (e.target.id === 'del-confirm-overlay') {
+    document.getElementById('del-confirm-overlay').classList.remove('show');
+    _delPending = null;
+  }
+});
+
+// Delegado de eventos para botones eliminar en tablas
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.btn-del-reg');
+  if (!btn) return;
+  const mod = btn.dataset.mod;
+  const idx = parseInt(btn.dataset.idx);
+  const dataMap = { water: window._waterTableData, waste: window._wasteTableData, carbon: window._carbonTableData };
+  const data = dataMap[mod];
+  if (data && data[idx]) showDeleteConfirm(mod, idx, data[idx]);
+});
 
 function updateNavCounts() {
   document.getElementById('nav-water-count').textContent = state.water.length || '';
